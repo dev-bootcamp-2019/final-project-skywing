@@ -6,33 +6,40 @@ import "./LoanUtil.sol";
 contract Loan is Ownable {
     bytes32 public id;
     address public borrower;
-    uint256 public loanAmount;
-    uint256 public ownedAmount;
+    uint public loanAmount;
+    uint public ownedAmount;
     uint public lenderCount;
     uint public creationTime = now;
     uint public fullyFundedTime;
 
-    enum Status { Requesting, Funding, Funded, FundWithdrawn, Repaid, Defaulted, Refunded, Cancelled, Disabled }
+    enum Status { Requesting, Funding, Funded, FundWithdrawn, Repaid, Defaulted, Refunded, Cancelled, Closed }
 
     struct Lender {
         address payable account;
-        uint256 lendingAmount;
-        uint256 repaidAmount;
+        uint lendingAmount;
+        uint repaidAmount;
     }
 
     Status public status;
+    // use for circuit breaker
+    bool public stopped;
     mapping(address => Lender) internal lenders;
     mapping(uint => address) internal lenderAddr;
 
+    /// events for loan status
     event Requesting(bytes32 loanId, address borrower, address owner);
-    event Funding(bytes32 loanId, address lender, uint256 amount);
-    event Funded(bytes32 loanId, uint256 amount);
-    event FundWithdrawn(bytes32 loanId, uint256 amount);
-    event Repaid(bytes32 loadId, uint256 amount);
-    event Defaulted(bytes32 loanId, uint256 defaultedAmt, uint256 loanAmt);
-    event Refunded(bytes32 loanId, address lender, uint256 amount);
-    event Disabled(bytes32 loanId);
-    
+    event Funding(bytes32 loanId, address lender, uint amount);
+    event Funded(bytes32 loanId, uint amount);
+    event FundWithdrawn(bytes32 loanId, uint amount);
+    event Repaid(bytes32 loadId, uint amount);
+    event Defaulted(bytes32 loanId, uint defaultedAmt, uint loanAmt);
+    event Refunded(bytes32 loanId, address lender, uint amount);
+    event Cancelled(bytes32 loanId);
+    event Stopped(bytes32 loanId);
+    event Resumed(bytes32 loanId);
+    event Closed(bytes32 loanId);
+
+    /// modifiers to check loan in the required status.
     modifier isFunding { require(status == Status.Funding, "Required Status: Funding"); _; }
     modifier isFunded { require(status == Status.Funded, "Required Status: Funded"); _; }
     modifier isWithdrawn { require(status == Status.FundWithdrawn, "Required Status: Withdraw"); _; }
@@ -40,22 +47,28 @@ contract Loan is Ownable {
     modifier isDefaulted { require(status == Status.Defaulted, "Required Status: Defaulted"); _; }
     modifier isRefunded { require(status == Status.Refunded, "Required Status: Refunded"); _; }
     modifier isCancelled { require(status == Status.Cancelled, "Required Status: Cancelled"); _; }
+    modifier isNotStopped { require(stopped != true, "The state of the contract is stopped by the owner, no operations allow at this time."); _; }
 
+    /// internal constructor to make abstract contract.
     constructor() internal {}
     
-    function fundIt() public payable returns(bool);
+    /// abtract functions.
 
-    function refund() public payable returns(bool);
-    
-    function withdrawFund() public payable returns(bool);
+    function requestLoan(address _borrower, uint _amount) public;
 
-    function paybackFund(uint256 amount) public payable returns(bool);
+    function depositFund() public payable;
+
+    function refund() public payable;
     
-    function defaultLoan() public returns(bool);
+    function withdrawFund() public payable;
+
+    function repayFund() public payable;
+
+    function paybackLender() public payable;
     
-    function cancelLoan() public returns(bool);
+    function defaultLoan() public;
     
-    function disable() public returns(bool);
+    function cancelLoan() public;
     
     /// Internal functions
     
@@ -65,9 +78,29 @@ contract Loan is Ownable {
 
     /// Public functions
 
-    function getLenderInfo(address addr) public view returns(address, uint256) {
+    function stop() public onlyOwner
+    {
+        stopped = true;
+        emit Stopped(id);
+    }
+
+    function resume() public onlyOwner
+    {
+        stopped = false;
+        emit Resumed(id);
+    }
+
+    function getLenderBy(address addr) public view returns(address, uint, uint) {
         Lender memory l = lenders[addr];
-        return (l.account, l.lendingAmount);
+        return (l.account, l.lendingAmount, l.repaidAmount);
+    }
+
+    function getLenderAddressAt(uint idx) public view returns(address) {
+        return lenderAddr[idx];
+    }
+
+    function getLenderAt(uint idx) public view returns(address, uint, uint) {
+        return getLenderBy(getLenderAddressAt(idx));
     }
 
     function getBalance() public view returns(uint256) {
