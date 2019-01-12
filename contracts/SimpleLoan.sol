@@ -16,6 +16,8 @@ contract SimpleLoan is Loan {
 
     modifier onlyCreatedAfterTenWeek { require(onlyAfter(creationTime + 10 weeks), "Authorized only after 10 weeks loan requested."); _; }
 
+    modifier canRefund { require(status == Status.Funding || status == Status.Funded, "Required Status: Funding or Funded"); _; }
+
     constructor() public {
         status = Status.Requesting;
         id = LoanUtil.generateId(borrower, owner());
@@ -55,7 +57,7 @@ contract SimpleLoan is Loan {
         }
     }
 
-    function refund() public payable isFunding isNotStopped onlyOwner
+    function refund() public payable canRefund isNotStopped onlyOwner
     {
         require(ownedAmount == getBalance(), "Balance is not enough to refund all lenders.");
 
@@ -100,6 +102,7 @@ contract SimpleLoan is Loan {
             {
                 uint repaidAmt = lender.lendingAmount;
                 delete lenders[lenderAddr[i]];
+                lender.repaidAmount = repaidAmt;
                 ownedAmount -= repaidAmt;
                 lender.account.transfer(repaidAmt);
             }
