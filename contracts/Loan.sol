@@ -27,17 +27,17 @@ contract Loan is Ownable {
     mapping(uint => address) internal lenderAddr;
 
     /// events for loan status
-    event Requesting(bytes32 loanId, address borrower, address owner);
-    event Funding(bytes32 loanId, address lender, uint amount);
-    event Funded(bytes32 loanId, uint amount);
-    event FundWithdrawn(bytes32 loanId, uint amount);
-    event Repaid(bytes32 loadId, uint amount);
-    event Defaulted(bytes32 loanId, uint defaultedAmt, uint loanAmt);
-    event Refunded(bytes32 loanId, address lender, uint amount);
-    event Cancelled(bytes32 loanId);
-    event Stopped(bytes32 loanId);
-    event Resumed(bytes32 loanId);
-    event Closed(bytes32 loanId);
+    event Requesting(bytes32 indexed loanId, address indexed borrower, address owner);
+    event Funding(bytes32 indexed loanId, address indexed lender, uint amount);
+    event Funded(bytes32 indexed loanId, uint amount);
+    event FundWithdrawn(bytes32 indexed loanId, uint amount);
+    event Repaid(bytes32 indexed loadId, uint amount);
+    event Defaulted(bytes32 indexed loanId, uint defaultedAmt, uint loanAmt);
+    event Refunded(bytes32 indexed loanId, address indexed lender, uint amount);
+    event Cancelled(bytes32 indexed loanId);
+    event Stopped(bytes32 indexed loanId);
+    event Resumed(bytes32 indexed loanId);
+    event Closed(bytes32 indexed loanId);
 
     /// modifiers to check loan in the required status.
     modifier isFunding { require(status == Status.Funding, "Required Status: Funding"); _; }

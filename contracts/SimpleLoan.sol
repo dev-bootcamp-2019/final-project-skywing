@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "./Ownable.sol";
 import "./Loan.sol";
-import "./LoanUtil.sol";
+import {LoanUtil} from "./LoanUtil.sol";
 
 contract SimpleLoan is Loan {
     
@@ -77,7 +77,7 @@ contract SimpleLoan is Loan {
         status = Status.Refunded;
     }
     
-    function withdrawFund() public payable isFunded isNotStopped onlyBorrower onlyFullyFundedAfterOneWeek
+    function withdrawFund() public payable isFunded isNotStopped onlyBorrower
     {
         require(getBalance() > 0, "The balance is 0 currently.");
         status = Status.FundWithdrawn;
@@ -93,8 +93,7 @@ contract SimpleLoan is Loan {
         emit Repaid(id, msg.value);
     }
 
-    function paybackLender() public payable isRepaid isNotStopped onlyOwner
-    {
+    function paybackLender() public payable isRepaid isNotStopped onlyOwner {
         require(ownedAmount == getBalance(), "Balance is not enough to refund all lenders.");
         for(uint i=0; i<lenderCount; i++) {
             Lender memory lender = lenders[lenderAddr[i]];
@@ -112,14 +111,12 @@ contract SimpleLoan is Loan {
         emit Closed(id);
     }
     
-    function defaultLoan() public isWithdrawn isNotStopped onlyBorrowerOrOwner onlyFullyFundedAfterFourWeek
-    {
+    function defaultLoan() public isWithdrawn isNotStopped onlyBorrowerOrOwner {
         status = Status.Defaulted;
         emit Defaulted(id, ownedAmount, loanAmount);
     }
     
-    function cancelLoan() public isNotStopped onlyBorrowerOrOwner 
-    {
+    function cancelLoan() public isNotStopped onlyBorrowerOrOwner {
         require(lenderCount == 0, "Can't cancelled contract when fund is provided. Fund need to be return first before cancel.");
         status = Status.Cancelled;
         emit Cancelled(id);

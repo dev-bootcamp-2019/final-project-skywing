@@ -5,7 +5,4 @@ library LoanUtil {
         uint256 generatedId = uint256(addr1) - uint256(addr2) + now;
         return bytes32(generatedId);
     }
-
-    //modifier loanAmountReach
-
 }
