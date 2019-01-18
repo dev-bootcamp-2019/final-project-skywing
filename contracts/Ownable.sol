@@ -15,7 +15,6 @@ contract Ownable {
      * account.
      */
     constructor() internal {
-        _owner = msg.sender;
         emit OwnershipTransferred(address(0), _owner);
     }
 

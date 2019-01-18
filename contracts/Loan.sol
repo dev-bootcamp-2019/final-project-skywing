@@ -4,13 +4,13 @@ import "./Ownable.sol";
 import "./LoanUtil.sol";
 
 contract Loan is Ownable {
-    bytes32 public id;
-    address public borrower;
-    uint public loanAmount;
-    uint public ownedAmount;
-    uint public lenderCount;
-    uint public creationTime = now;
-    uint public fullyFundedTime;
+    bytes32 id;
+    address borrower;
+    uint loanAmount;
+    uint ownedAmount;
+    uint lenderCount;
+    uint creationTime = now;
+    uint fullyFundedTime;
 
     enum Status { Requesting, Funding, Funded, FundWithdrawn, Repaid, Defaulted, Refunded, Cancelled, Closed }
 
@@ -20,9 +20,9 @@ contract Loan is Ownable {
         uint repaidAmount;
     }
 
-    Status public status;
+    Status internal status;
     // use for circuit breaker
-    bool public stopped;
+    bool internal stopped;
     mapping(address => Lender) internal lenders;
     mapping(uint => address) internal lenderAddr;
 
@@ -54,21 +54,21 @@ contract Loan is Ownable {
     
     /// abtract functions.
 
-    function requestLoan(address _borrower, uint _amount) public;
+    function request(address _borrower, uint _amount) public;
 
     function depositFund() public payable;
 
     function refund() public payable;
     
-    function withdrawFund() public payable;
+    function withdrawToBorrower() public payable;
 
-    function repayFund() public payable;
+    function repay() public payable;
 
-    function paybackLender() public payable;
+    function withdrawToLenders() public payable;
     
-    function defaultLoan() public;
+    function toDefault() public;
     
-    function cancelLoan() public;
+    function cancel() public;
     
     /// Internal functions
     
@@ -107,4 +107,23 @@ contract Loan is Ownable {
         return address(this).balance;
     }
 
+    function getStatus() public view returns(Status) {
+        return status;
+    }
+
+    function getLoanAmount() public view returns(uint) {
+        return loanAmount;
+    }
+
+    function getOwnedAmount() public view returns(uint) {
+        return ownedAmount;
+    }
+
+    function getBorrower() public view returns(address) {
+        return borrower;
+    }
+
+    function getLenderCount() public view returns(uint) {
+        return lenderCount;
+    }
 }

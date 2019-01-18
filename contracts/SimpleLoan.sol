@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "./Ownable.sol";
 import "./Loan.sol";
 import {LoanUtil} from "./LoanUtil.sol";
+import {StringUtils} from "./StringLib.sol";
 
 contract SimpleLoan is Loan {
     
@@ -24,7 +25,7 @@ contract SimpleLoan is Loan {
         creationTime = now;
     }
 
-    function requestLoan(address _borrower, uint _amount) public {
+    function request(address _borrower, uint _amount) public {
         require(_borrower != address(0), "Address is empty");
         require(_borrower != owner(), "Owner can't be borrower at the same time.");
         require(_amount > 0, "0 is not a valid borrowing amount.");
@@ -35,8 +36,7 @@ contract SimpleLoan is Loan {
         emit Requesting(id, borrower, owner());
     }
     
-    function depositFund() public payable isFunding isNotStopped
-    {
+    function depositFund() public payable isFunding isNotStopped {
         require(msg.value <= loanAmount, "Lending amount is more the amount requested.");
         require(msg.value <= loanAmount - ownedAmount, "Lending amount is more than remaining fund needed.");
         require(lenders[msg.sender].account == address(0), "Existing lender.");
@@ -57,8 +57,7 @@ contract SimpleLoan is Loan {
         }
     }
 
-    function refund() public payable canRefund isNotStopped onlyOwner
-    {
+    function refund() public payable canRefund isNotStopped onlyOwner {
         require(ownedAmount == getBalance(), "Balance is not enough to refund all lenders.");
 
         for(uint i=0; i<lenderCount; i++) {
@@ -77,23 +76,21 @@ contract SimpleLoan is Loan {
         status = Status.Refunded;
     }
     
-    function withdrawFund() public payable isFunded isNotStopped onlyBorrower
-    {
+    function withdrawToBorrower() public payable isFunded isNotStopped onlyBorrower {
         require(getBalance() > 0, "The balance is 0 currently.");
         status = Status.FundWithdrawn;
         msg.sender.transfer(getBalance());
         emit FundWithdrawn(id, ownedAmount);
     }
 
-    function repayFund() public payable isWithdrawn isNotStopped onlyBorrower 
-    {
+    function repay() public payable isWithdrawn isNotStopped onlyBorrower {
         require(msg.value == ownedAmount, "Repaid amount not the same as amount owned.");
         ownedAmount = ownedAmount - msg.value;
         status = Status.Repaid;
         emit Repaid(id, msg.value);
     }
 
-    function paybackLender() public payable isRepaid isNotStopped onlyOwner {
+    function withdrawToLenders() public payable isRepaid isNotStopped onlyOwner {
         require(ownedAmount == getBalance(), "Balance is not enough to refund all lenders.");
         for(uint i=0; i<lenderCount; i++) {
             Lender memory lender = lenders[lenderAddr[i]];
@@ -111,12 +108,12 @@ contract SimpleLoan is Loan {
         emit Closed(id);
     }
     
-    function defaultLoan() public isWithdrawn isNotStopped onlyBorrowerOrOwner {
+    function toDefault() public isWithdrawn isNotStopped onlyBorrowerOrOwner {
         status = Status.Defaulted;
         emit Defaulted(id, ownedAmount, loanAmount);
     }
     
-    function cancelLoan() public isNotStopped onlyBorrowerOrOwner {
+    function cancel() public isNotStopped onlyBorrowerOrOwner {
         require(lenderCount == 0, "Can't cancelled contract when fund is provided. Fund need to be return first before cancel.");
         status = Status.Cancelled;
         emit Cancelled(id);

@@ -1,10 +1,16 @@
-var SimpleLoan = artifacts.require("./SimpleLoan.sol");
-var LoanUtil = artifacts.require("./LoanUtil.sol");
+const SimpleLoan = artifacts.require("./SimpleLoan");
+const LoanUtil = artifacts.require("./LoanUtil");
+const StringLib = artifacts.require("./StringLib");
+const StringUtils = artifacts.require("./StringUtils");
 
 
 module.exports = function(deployer) {
+    
+    deployer.deploy(StringLib);
+    deployer.link(StringLib, StringUtils);
+    deployer.deploy(StringUtils);
+    deployer.link(StringUtils, SimpleLoan);
     deployer.deploy(LoanUtil);
-    deployer.link(LoanUtil, SimpleLoan);    
-    //deployer.deploy(SimpleLoan, "0x2Ec4620781edcF4CA926b245C491BAcC2e751658", "0xC9CAa8934b4444e3cafD991E07A0408d2E482386", 10);
+    deployer.link(LoanUtil, SimpleLoan);
     deployer.deploy(SimpleLoan);
 };
