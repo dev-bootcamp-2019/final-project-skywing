@@ -4,14 +4,6 @@ import "./Ownable.sol";
 import "./LoanUtil.sol";
 
 contract Loan is Ownable {
-    bytes32 id;
-    address borrower;
-    uint loanAmount;
-    uint ownedAmount;
-    uint lenderCount;
-    uint creationTime = now;
-    uint fullyFundedTime;
-
     enum Status { Requesting, Funding, Funded, FundWithdrawn, Repaid, Defaulted, Refunded, Cancelled, Closed }
 
     struct Lender {
@@ -20,18 +12,26 @@ contract Loan is Ownable {
         uint repaidAmount;
     }
 
-    Status internal status;
+    bytes32 _id;
+    address _borrower;
+    uint _loanAmount;
+    uint _ownedAmount;
+    uint _lenderCount;
+    uint _creationTime = now;
+    uint _fullyFundedTime;
+    Status internal _status;
+
     // use for circuit breaker
-    bool internal stopped;
-    mapping(address => Lender) internal lenders;
-    mapping(uint => address) internal lenderAddr;
+    bool internal _stopped;
+    mapping(address => Lender) internal _lenders;
+    mapping(uint => address) internal _lenderAddr;
 
     /// events for loan status
     event Requesting(bytes32 indexed loanId, address indexed borrower, address owner);
     event Funding(bytes32 indexed loanId, address indexed lender, uint amount);
     event Funded(bytes32 indexed loanId, uint amount);
     event FundWithdrawn(bytes32 indexed loanId, uint amount);
-    event Repaid(bytes32 indexed loadId, uint amount);
+    event Repaid(bytes32 indexed loanId, uint amount);
     event Defaulted(bytes32 indexed loanId, uint defaultedAmt, uint loanAmt);
     event Refunded(bytes32 indexed loanId, address indexed lender, uint amount);
     event Cancelled(bytes32 indexed loanId);
@@ -39,22 +39,52 @@ contract Loan is Ownable {
     event Resumed(bytes32 indexed loanId);
     event Closed(bytes32 indexed loanId);
 
-    /// modifiers to check loan in the required status.
-    modifier isFunding { require(status == Status.Funding, "Required Status: Funding"); _; }
-    modifier isFunded { require(status == Status.Funded, "Required Status: Funded"); _; }
-    modifier isWithdrawn { require(status == Status.FundWithdrawn, "Required Status: Withdraw"); _; }
-    modifier isRepaid { require(status == Status.Repaid, "Required Status: Repaid"); _; }
-    modifier isDefaulted { require(status == Status.Defaulted, "Required Status: Defaulted"); _; }
-    modifier isRefunded { require(status == Status.Refunded, "Required Status: Refunded"); _; }
-    modifier isCancelled { require(status == Status.Cancelled, "Required Status: Cancelled"); _; }
-    modifier isNotStopped { require(stopped != true, "The state of the contract is stopped by the owner, no operations allow at this time."); _; }
-
     /// internal constructor to make abstract contract.
-    constructor() internal {}
+    constructor() internal { }
+
+    /// modifiers to check loan in the required status.
+    modifier isFunding { 
+        require(_status == Status.Funding, "Required Status: Funding"); 
+        _; 
+    }
+    
+    modifier isFunded { 
+        require(_status == Status.Funded, "Required Status: Funded"); 
+        _; 
+    }
+    
+    modifier isWithdrawn { 
+        require(_status == Status.FundWithdrawn, "Required Status: Withdraw"); 
+        _; 
+    }
+    
+    modifier isRepaid { 
+        require(_status == Status.Repaid, "Required Status: Repaid"); 
+        _; 
+    }
+
+    modifier isDefaulted { 
+        require(_status == Status.Defaulted, "Required Status: Defaulted"); 
+        _; 
+    }
+    
+    modifier isRefunded { 
+        require(_status == Status.Refunded, "Required Status: Refunded"); 
+        _; 
+    }
+    
+    modifier isCancelled { 
+        require(_status == Status.Cancelled, "Required Status: Cancelled"); 
+        _; 
+    }
+    
+    modifier isNotStopped { 
+        require(_stopped != true, "The state of the contract is stopped by the owner, no operations allow at this time."); 
+        _; 
+    }
     
     /// abtract functions.
-
-    function request(address _borrower, uint _amount) public;
+    function request(address borrower, uint amount) public;
 
     function depositFund() public payable;
 
@@ -78,52 +108,59 @@ contract Loan is Ownable {
 
     /// Public functions
 
-    function stop() public onlyOwner
-    {
-        stopped = true;
-        emit Stopped(id);
+    function stop() public onlyOwner {
+        _stopped = true;
+        emit Stopped(_id);
     }
 
-    function resume() public onlyOwner
-    {
-        stopped = false;
-        emit Resumed(id);
+    function resume() public onlyOwner {
+        _stopped = false;
+        emit Resumed(_id);
     }
 
-    function getLenderBy(address addr) public view returns(address, uint, uint) {
-        Lender memory l = lenders[addr];
-        return (l.account, l.lendingAmount, l.repaidAmount);
+    // Public property getters
+    function id() public view returns(bytes32) {
+        return _id;
     }
 
-    function getLenderAddressAt(uint idx) public view returns(address) {
-        return lenderAddr[idx];
+    function lenderBy(address addr) public view returns(address, uint, uint) {
+        if (addr == address(0)) {
+            return (address(0), 0, 0);
+        } else {
+            Lender memory l = _lenders[addr];
+            return (l.account, l.lendingAmount, l.repaidAmount);
+        }
     }
 
-    function getLenderAt(uint idx) public view returns(address, uint, uint) {
-        return getLenderBy(getLenderAddressAt(idx));
+    function lenderAddressAt(uint idx) public view returns(address) {
+        return _lenderAddr[idx];
     }
 
-    function getBalance() public view returns(uint256) {
+    function lenderAt(uint idx) public view returns(address, uint, uint) {
+        return lenderBy(lenderAddressAt(idx));
+    }
+
+    function balance() public view returns(uint256) {
         return address(this).balance;
     }
 
-    function getStatus() public view returns(Status) {
-        return status;
+    function status() public view returns(Status) {
+        return _status;
     }
 
-    function getLoanAmount() public view returns(uint) {
-        return loanAmount;
+    function loanAmount() public view returns(uint) {
+        return _loanAmount;
     }
 
-    function getOwnedAmount() public view returns(uint) {
-        return ownedAmount;
+    function ownedAmount() public view returns(uint) {
+        return _ownedAmount;
     }
 
-    function getBorrower() public view returns(address) {
-        return borrower;
+    function borrower() public view returns(address) {
+        return _borrower;
     }
 
-    function getLenderCount() public view returns(uint) {
-        return lenderCount;
+    function lenderCount() public view returns(uint) {
+        return _lenderCount;
     }
 }
