@@ -1,7 +1,13 @@
+/**
+ * Libraries and Dependencies
+ */
 const LoanUtil = artifacts.require('LoanUtil');
 const SimpleLoan = artifacts.require('SimpleLoan');
 const truffleAssert = require('truffle-assertions');
 
+/**
+ * Global variables used in all test cases.
+ */
 const LoanStatus = { 
     Requesting: 0, 
     Funding: 1, 
@@ -14,12 +20,20 @@ const LoanStatus = {
     Disabled: 8 
 };
 
+// Empty address. Same as Address(0).
 const emptyAddress = "0x0000000000000000000000000000000000000000";
 
+/**
+ * Calculate the total gas cost of a transaction.
+ * @param {transaction} tx 
+ */
 async function getTxGasCost(tx) {
     return web3.utils.toBN(tx.receipt.gasUsed).mul(web3.utils.toBN(await web3.eth.getGasPrice()));
 }
-/*
+
+/**
+ * Simple loan setup test cases.
+ */
 contract('SimpleLoan-Setup', function(accounts)  {
 
     const owner = accounts[0];
@@ -49,6 +63,9 @@ contract('SimpleLoan-Setup', function(accounts)  {
     });
 }); 
 
+/**
+ * Simple loan funding and refund test cases.
+ */
 contract('SimpleLoan-Fund-Refund', function(accounts) {
 
     const owner = accounts[0];
@@ -114,6 +131,9 @@ contract('SimpleLoan-Fund-Refund', function(accounts) {
 
 });
 
+/**
+ * Simple loan funding and witdrawing test cases.
+ */
 contract('SimpleLoan-Fund-Witdrawn', function(accounts) {
     const owner = accounts[0];
     const borrower = accounts[1];
@@ -162,6 +182,9 @@ contract('SimpleLoan-Fund-Witdrawn', function(accounts) {
 
 });
 
+/**
+ * Simple loan borrower repay to contract and withdrawing fund back to lender accounts.
+ */
 contract('SimpleLoan-Borrower-Repay', function(accounts) {
     const owner = accounts[0];
     const borrower = accounts[1];
@@ -236,7 +259,10 @@ contract('SimpleLoan-Borrower-Repay', function(accounts) {
     });
 
 });
-*/
+
+/**
+ * Simple loan default and cancel test cases.
+ */
 contract('SimpleLoan-Default-Cancel', function(accounts) {
     const owner = accounts[0];
     const borrower = accounts[1];

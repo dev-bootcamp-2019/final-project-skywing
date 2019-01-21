@@ -5,8 +5,21 @@ import "./Loan.sol";
 import {LoanUtil} from "./LoanUtil.sol";
 import {StringUtils} from "./StringLib.sol";
 
+/**
+ * @title Simple loan contract
+ * @notice Simple loan contract inherit from the Loan contract that allows a borrower request loan that can be funded by 
+ * several lenders. Lender will deposit ether to the contract account, once it matches the loan
+ * amount requested by the borrower, the borrower can withdraw the fund to its account. Once ready, 
+ * the borrower can repay the loan by deposit the money to the contract account. The lender can withdraw the 
+ * fund back from the contract to their wallets account.
+ * @dev The simple loan contract is to demonstrate basic deposit and withdrawal of ether between contracts and 
+ * wallets
+ */
 contract SimpleLoan is Loan {
     
+    /**
+     * @dev Default constructor to setup the initial simple loan contract
+     */
     constructor() public {
         _status = Status.Requesting;
         _id = LoanUtil.generateId(_borrower, owner());
@@ -57,7 +70,12 @@ contract SimpleLoan is Loan {
 
     
     // Public functions
-    function request(address borrower, uint amount) public {
+
+    /**
+     * @notice Setup the loan request with the borrower address and the loan amount
+     * @dev only the owner (or the loan broker in this case) can setup the borrowing info.
+     */
+    function request(address borrower, uint amount) public onlyOwner {
         require(borrower != address(0), "Address is empty");
         require(borrower != owner(), "Owner can't be borrower at the same time.");
         require(amount > 0, "0 is not a valid borrowing amount.");
@@ -68,6 +86,10 @@ contract SimpleLoan is Loan {
         emit Requesting(_id, _borrower, owner());
     }
     
+    /**
+     * @notice Deposit fund to the contract balance
+     * @dev Anyone other than the owner and borrower in this case.
+     */
     function depositFund() public payable isFunding isNotStopped {
         require(msg.value <= _loanAmount, "Lending amount is more the amount requested.");
         require(msg.value <= _loanAmount - _ownedAmount, "Lending amount is more than remaining fund needed.");
@@ -89,6 +111,11 @@ contract SimpleLoan is Loan {
         }
     }
 
+    /**
+     * @notice Return the deposit fund to lender
+     * @dev It can only refund when the borrower hasn't withdrawn the fund. Only owner (contract brodker) can
+     * execute the refund.
+     */
     function refund() public payable canRefund isNotStopped onlyOwner {
         require(_ownedAmount == balance(), "Balance is not enough to refund all lenders.");
 
@@ -108,6 +135,9 @@ contract SimpleLoan is Loan {
         _status = Status.Refunded;
     }
     
+    /**
+     * @notice Withdrawing the fund deposited by the lender to borrower account.
+     */
     function withdrawToBorrower() public payable isFunded isNotStopped onlyBorrower {
         require(balance() > 0, "The balance is 0 currently.");
         _status = Status.FundWithdrawn;
@@ -115,6 +145,9 @@ contract SimpleLoan is Loan {
         emit FundWithdrawn(_id, _ownedAmount);
     }
 
+    /**
+     * @notice borrower repay the loan amount to the contract address
+     */
     function repay() public payable isWithdrawn isNotStopped onlyBorrower {
         require(msg.value == _ownedAmount, "Repaid amount not the same as amount owned.");
         _ownedAmount -= msg.value;
@@ -122,6 +155,9 @@ contract SimpleLoan is Loan {
         emit Repaid(_id, msg.value);
     }
 
+    /**
+     * @notice Widthdraw fund from contract balance back to lender according to the loan amount
+     */
     function withdrawToLenders() public payable isRepaid isNotStopped onlyOwner {
         require(_loanAmount == balance(), "Balance is not enough to refund all lenders.");
         for(uint i = 0; i < _lenderCount; i++) {
@@ -137,11 +173,17 @@ contract SimpleLoan is Loan {
         emit Closed(_id);
     }
     
+    /**
+     * @notice default the loan
+     */
     function toDefault() public isWithdrawn isNotStopped onlyBorrowerOrOwner {
         _status = Status.Defaulted;
         emit Defaulted(_id, _borrower, _ownedAmount, _loanAmount);
     }
     
+    /**
+     * @notice to cancel the loan
+     */
     function cancel() public isNotStopped onlyBorrowerOrOwner {
         require(_lenderCount == 0, "Can't cancelled contract when fund is provided. Fund need to be return first before cancel.");
         _status = Status.Cancelled;
