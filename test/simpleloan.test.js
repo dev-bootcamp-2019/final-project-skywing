@@ -19,7 +19,7 @@ const emptyAddress = "0x0000000000000000000000000000000000000000";
 async function getTxGasCost(tx) {
     return web3.utils.toBN(tx.receipt.gasUsed).mul(web3.utils.toBN(await web3.eth.getGasPrice()));
 }
-
+/*
 contract('SimpleLoan-Setup', function(accounts)  {
 
     const owner = accounts[0];
@@ -48,7 +48,6 @@ contract('SimpleLoan-Setup', function(accounts)  {
         assert.equal(loanAmount.toString(), (await loan.loanAmount()).toString(), "Request loan amount not matched.");
     });
 }); 
-
 
 contract('SimpleLoan-Fund-Refund', function(accounts) {
 
@@ -114,7 +113,6 @@ contract('SimpleLoan-Fund-Refund', function(accounts) {
     });
 
 });
-
 
 contract('SimpleLoan-Fund-Witdrawn', function(accounts) {
     const owner = accounts[0];
@@ -235,6 +233,80 @@ contract('SimpleLoan-Borrower-Repay', function(accounts) {
             assert.strictEqual(l.balance_before_widthdrawn.add(l.lendingAmount).toString(), l.balance_after_widthdrawn.toString(), "Lender balance should increase by the lending amount once widthdrawn repay fund.");
         }
         
+    });
+
+});
+*/
+contract('SimpleLoan-Default-Cancel', function(accounts) {
+    const owner = accounts[0];
+    const borrower = accounts[1];
+
+    const lender1 = accounts[3];
+    const lender2 = accounts[4];
+    const lender3 = accounts[5];
+
+    const lendingAmt1 = web3.utils.toWei(web3.utils.toBN(2), "ether");
+    const lendingAmt2 = web3.utils.toWei(web3.utils.toBN(3), "ether");
+    const lendingAmt3 = web3.utils.toWei(web3.utils.toBN(5), "ether");
+
+    const loanAmount = web3.utils.toWei(web3.utils.toBN(10), "ether");
+
+    let loan;
+
+    beforeEach(async() => {
+        loan = await SimpleLoan.new();
+        await loan.request(borrower, loanAmount);
+        await loan.depositFund({from: lender1, value: lendingAmt1});
+        await loan.depositFund({from: lender2, value: lendingAmt2});
+        await loan.depositFund({from: lender3, value: lendingAmt3});
+    })
+
+    it('should defaulted by the borrower', async() => {
+
+        await truffleAssert.fails(loan.toDefault(), truffleAssert.ErrorType.REVERT, "Required Status: Withdraw");
+        await loan.withdrawToBorrower({from:borrower});
+
+        await truffleAssert.fails(loan.toDefault({from: lender1}), truffleAssert.ErrorType.REVERT, "Authorized for borrower or owner only");
+        let tx = await loan.toDefault({from: borrower});        
+        let rec = {'id': await loan.id(), 'borrower': borrower, 'ownedAmount': await loan.ownedAmount(), 'loanAmount': await loan.loanAmount()};
+        await truffleAssert.eventEmitted(tx, 'Defaulted', ev => {
+            return ev.loanId === rec.id && ev.borrower === rec.borrower
+                && ev.defaultedAmt.toString() === rec.ownedAmount.toString() 
+                && ev.loanAmt.toString() === rec.loanAmount.toString();
+        });
+
+        assert.strictEqual((await loan.status()).toNumber(), LoanStatus.Defaulted, "Status should be Defaulted");
+    });
+
+    it('should defaulted by the owner', async() => {
+        await loan.withdrawToBorrower({from:borrower});
+        await loan.toDefault({from: owner});
+        assert.strictEqual((await loan.status()).toNumber(), LoanStatus.Defaulted, "Status should be Defaulted");
+    });
+
+    it('should be cancelled by borrower', async() => {
+        let newloan = await SimpleLoan.new();
+        await newloan.request(borrower, loanAmount);
+        await truffleAssert.fails(newloan.cancel({from:lender1}), truffleAssert.ErrorType.REVERT, "Authorized for borrower or owner only");
+        
+        let tx = await newloan.cancel({from: borrower});
+        let loanId = await newloan.id();
+        await truffleAssert.eventEmitted(tx, 'Cancelled', ev => {
+            return ev.loanId === loanId;
+        });
+        assert.strictEqual((await newloan.status()).toNumber(), LoanStatus.Cancelled, "Status should be Cancelled");
+    });
+
+    it('should be cancelled by owner', async() => {
+        let newloan = await SimpleLoan.new();
+        await newloan.request(borrower, loanAmount);
+        await newloan.cancel({from: owner});
+        assert.strictEqual((await newloan.status()).toNumber(), LoanStatus.Cancelled, "Status should be Cancelled");
+    });
+
+    it('should not be cancelled when borrower withdrawn the money', async() => {
+        await loan.withdrawToBorrower({from:borrower});
+        await truffleAssert.fails(loan.cancel({from:borrower}), truffleAssert.ErrorType.REVERT, "Can't cancelled contract when fund is provided. Fund need to be return first before cancel");
     });
 
 });

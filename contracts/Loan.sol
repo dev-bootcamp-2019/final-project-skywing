@@ -32,7 +32,7 @@ contract Loan is Ownable {
     event Funded(bytes32 indexed loanId, uint amount);
     event FundWithdrawn(bytes32 indexed loanId, uint amount);
     event Repaid(bytes32 indexed loanId, uint amount);
-    event Defaulted(bytes32 indexed loanId, uint defaultedAmt, uint loanAmt);
+    event Defaulted(bytes32 indexed loanId, address indexed borrower, uint defaultedAmt, uint loanAmt);
     event Refunded(bytes32 indexed loanId, address indexed lender, uint amount);
     event Cancelled(bytes32 indexed loanId);
     event Stopped(bytes32 indexed loanId);

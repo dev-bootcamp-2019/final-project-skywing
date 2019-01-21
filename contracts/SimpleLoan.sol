@@ -139,7 +139,7 @@ contract SimpleLoan is Loan {
     
     function toDefault() public isWithdrawn isNotStopped onlyBorrowerOrOwner {
         _status = Status.Defaulted;
-        emit Defaulted(_id, _ownedAmount, _loanAmount);
+        emit Defaulted(_id, _borrower, _ownedAmount, _loanAmount);
     }
     
     function cancel() public isNotStopped onlyBorrowerOrOwner {
