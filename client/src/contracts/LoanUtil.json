@@ -815,9 +815,16 @@
     "name": "solc",
     "version": "0.5.0+commit.1d4f565a.Emscripten.clang"
   },
-  "networks": {},
+  "networks": {
+    "5777": {
+      "events": {},
+      "links": {},
+      "address": "0x8a832dEd11EE043d7Ac1f13277B9B806DE4aAF1C",
+      "transactionHash": "0x16d922a953e232b1846ef8a401221900557233fc9d1b57d31faa7ba4403f2121"
+    }
+  },
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-01-22T00:06:19.035Z",
+  "updatedAt": "2019-01-22T12:18:43.451Z",
   "devdoc": {
     "details": "Just create out of learning and experimenting how library can be linked and used in contract.",
     "methods": {},
