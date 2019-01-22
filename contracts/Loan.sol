@@ -189,7 +189,7 @@ contract Loan is Ownable {
 
     /**
      * @dev helper function to get lender from the mapping
-     * @param indx the index position in lender address mapping
+     * @param idx the index position in lender address mapping
      * @return a lender info in tuples
      */
     function lenderAt(uint idx) public view returns(address, uint, uint) {
