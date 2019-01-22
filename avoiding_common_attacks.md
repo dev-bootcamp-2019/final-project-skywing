@@ -1,1 +1,4 @@
-A document explains what measure you took to ensure that your contracts are not susceptible to common attacks.
+# Avoiding Common Attacks
+
+## Circuit Breaker Design Pattern
+
