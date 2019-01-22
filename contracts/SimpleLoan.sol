@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "./Ownable.sol";
+
 import "./Loan.sol";
 import {LoanUtil} from "./LoanUtil.sol";
 import {StringUtils} from "./StringLib.sol";
@@ -34,32 +34,6 @@ contract SimpleLoan is Loan {
     
     modifier onlyBorrower { 
         require(msg.sender == _borrower, "Authorized for borrower only."); 
-        _; 
-    }
-    
-    modifier onlyFullyFundedAfterOneWeek { 
-        require(onlyAfter(_fullyFundedTime + 1 weeks), "Authorized only after 1 week fully funded"); 
-        _; 
-    
-    }
-    
-    modifier onlyFullyFundedAfterTwoWeek { 
-        require(onlyAfter(_fullyFundedTime + 2 weeks), "Authorized only after 2 weeks fully funded"); 
-        _; 
-    }
-
-    modifier onlyFullyFundedAfterThreeWeek { 
-        require(onlyAfter(_fullyFundedTime + 3 weeks), "Authorized only after 3 weeks fully funded"); 
-        _; 
-    }
-    
-    modifier onlyFullyFundedAfterFourWeek { 
-        require(onlyAfter(_fullyFundedTime + 4 weeks), "Authorized only after 4 weeks fully funded"); 
-        _; 
-    }
-
-    modifier onlyCreatedAfterTenWeek { 
-        require(onlyAfter(_creationTime + 10 weeks), "Authorized only after 10 weeks loan requested."); 
         _; 
     }
 
@@ -152,6 +126,7 @@ contract SimpleLoan is Loan {
         require(msg.value == _ownedAmount, "Repaid amount not the same as amount owned.");
         _ownedAmount -= msg.value;
         _status = Status.Repaid;
+        _repaidTime = now;
         emit Repaid(_id, msg.value);
     }
 

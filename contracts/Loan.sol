@@ -27,6 +27,7 @@ contract Loan is Ownable {
     uint _lenderCount;
     uint _creationTime = now;
     uint _fullyFundedTime;
+    uint _repaidTime;
     Status internal _status;
 
     // use for circuit breaker
@@ -242,16 +243,5 @@ contract Loan is Ownable {
      */
     function lenderCount() public view returns(uint) {
         return _lenderCount;
-    }
-
-    /// Internal functions
-
-    /**
-     * @notice validate current time is greater or equal to given time.
-     * @param _time  time in unix epock
-     * @return true if now is greater or equal to given time
-     */
-    function onlyAfter(uint _time) internal view returns(bool) { 
-        return now >= _time; 
     }
 }

@@ -17,11 +17,17 @@ const LoanStatus = {
     Defaulted: 5, 
     Refunded: 6, 
     Cancelled: 7, 
-    Disabled: 8 
+    Closed: 8 
 };
 
 // Empty address. Same as Address(0).
-const emptyAddress = "0x0000000000000000000000000000000000000000";
+const ADDRESS_EMPTY = "0x0000000000000000000000000000000000000000";
+
+const loanAmount = web3.utils.toWei(web3.utils.toBN(6), "ether");
+const lendingAmt1 = web3.utils.toWei(web3.utils.toBN(3), "ether");
+const lendingAmt2 = web3.utils.toWei(web3.utils.toBN(2), "ether");
+const lendingAmt3 = web3.utils.toWei(web3.utils.toBN(1), "ether");
+
 
 /**
  * Calculate the total gas cost of a transaction.
@@ -38,7 +44,6 @@ contract('SimpleLoan-Setup', function(accounts)  {
 
     const owner = accounts[0];
     const borrower = accounts[1];
-    const loanAmount = web3.utils.toWei(web3.utils.toBN(10), "ether");
     let loan;
 
     it("should create the new contract.", async() => {
@@ -46,13 +51,13 @@ contract('SimpleLoan-Setup', function(accounts)  {
         loan =  await SimpleLoan.new();        
         assert.strictEqual(await loan.owner(), owner, "Owner address not matched.");
         assert.equal(await loan.status(), LoanStatus.Requesting, "new created loan not in requesting status.");
-        assert.equal(await loan.borrower(), emptyAddress, "Borrower shoud be empty.");
+        assert.equal(await loan.borrower(), ADDRESS_EMPTY, "Borrower shoud be empty.");
         assert.equal((await loan.loanAmount()).toString(), "0", "Loan amount should be 0.");
     });
 
     it("should create the contract with borrowing info for funding", async() => {
+        assert.equal(await loan.status(), LoanStatus.Requesting, "loan with borrowing info should be in requesting status.")
         tx = await loan.request(borrower, loanAmount);
-        assert.equal(await loan.status(), LoanStatus.Funding, "loan with borrowing info should be in funding status.")
         let loanId = await loan.id();
         await truffleAssert.eventEmitted(tx, 'Requesting', ev => {
             return ev.loanId === loanId && ev.borrower === borrower;
@@ -67,20 +72,11 @@ contract('SimpleLoan-Setup', function(accounts)  {
  * Simple loan funding and refund test cases.
  */
 contract('SimpleLoan-Fund-Refund', function(accounts) {
-
     const owner = accounts[0];
     const borrower = accounts[1];
-
     const lender1 = accounts[3];
     const lender2 = accounts[4];
     const lender3 = accounts[5];
-
-    const lendingAmt1 = web3.utils.toWei(web3.utils.toBN(2), "ether");
-    const lendingAmt2 = web3.utils.toWei(web3.utils.toBN(3), "ether");
-    const lendingAmt3 = web3.utils.toWei(web3.utils.toBN(5), "ether");
-
-    const loanAmount = web3.utils.toWei("10", "ether");
-
     let loan;
 
     it("should be funded by 3 lenders with the amount of 2, 3, and 5 either", async() => {
@@ -137,17 +133,9 @@ contract('SimpleLoan-Fund-Refund', function(accounts) {
 contract('SimpleLoan-Fund-Witdrawn', function(accounts) {
     const owner = accounts[0];
     const borrower = accounts[1];
-
     const lender1 = accounts[3];
     const lender2 = accounts[4];
     const lender3 = accounts[5];
-
-    const lendingAmt1 = web3.utils.toWei(web3.utils.toBN(2), "ether");
-    const lendingAmt2 = web3.utils.toWei(web3.utils.toBN(3), "ether");
-    const lendingAmt3 = web3.utils.toWei(web3.utils.toBN(5), "ether");
-
-    const loanAmount = web3.utils.toWei(web3.utils.toBN(10), "ether");
-
     let loan;
 
     it('should witdrawn all the fund to the borrower', async() => {
@@ -188,17 +176,9 @@ contract('SimpleLoan-Fund-Witdrawn', function(accounts) {
 contract('SimpleLoan-Borrower-Repay', function(accounts) {
     const owner = accounts[0];
     const borrower = accounts[1];
-
     const lender1 = accounts[3];
     const lender2 = accounts[4];
     const lender3 = accounts[5];
-
-    const lendingAmt1 = web3.utils.toWei(web3.utils.toBN(2), "ether");
-    const lendingAmt2 = web3.utils.toWei(web3.utils.toBN(3), "ether");
-    const lendingAmt3 = web3.utils.toWei(web3.utils.toBN(5), "ether");
-
-    const loanAmount = web3.utils.toWei(web3.utils.toBN(10), "ether");
-
     let loan;
 
     it('should re-pay all the fund to the contract', async() => {
@@ -245,7 +225,8 @@ contract('SimpleLoan-Borrower-Repay', function(accounts) {
         await truffleAssert.eventEmitted(tx, 'Closed', ev => {
              return ev.loanId === loanId;
         });
-        
+        assert.strictEqual((await loan.status()).toNumber(), LoanStatus.Closed, "Status should be closed");
+    
         for(i=0; i<lenders.length; i++) {
             let l = lenders[i];
             let lender = await loan.lenderBy(l.address);
@@ -254,10 +235,8 @@ contract('SimpleLoan-Borrower-Repay', function(accounts) {
             l.balance_after_widthdrawn = web3.utils.toWei(await web3.eth.getBalance(l.address), 'wei');
             assert.strictEqual(l.repaidAmount.toString(), l.lendingAmount.toString(), "Repaid amount not match lending amount.");
             assert.strictEqual(l.balance_before_widthdrawn.add(l.lendingAmount).toString(), l.balance_after_widthdrawn.toString(), "Lender balance should increase by the lending amount once widthdrawn repay fund.");
-        }
-        
+        } 
     });
-
 });
 
 /**
@@ -266,17 +245,9 @@ contract('SimpleLoan-Borrower-Repay', function(accounts) {
 contract('SimpleLoan-Default-Cancel', function(accounts) {
     const owner = accounts[0];
     const borrower = accounts[1];
-
     const lender1 = accounts[3];
     const lender2 = accounts[4];
     const lender3 = accounts[5];
-
-    const lendingAmt1 = web3.utils.toWei(web3.utils.toBN(2), "ether");
-    const lendingAmt2 = web3.utils.toWei(web3.utils.toBN(3), "ether");
-    const lendingAmt3 = web3.utils.toWei(web3.utils.toBN(5), "ether");
-
-    const loanAmount = web3.utils.toWei(web3.utils.toBN(10), "ether");
-
     let loan;
 
     beforeEach(async() => {
