@@ -16,8 +16,56 @@ function request(address borrower, uint amount) public onlyOwner {
 }
 ```
 
-## Circuit Breaker Design Pattern
+## Restricting Access
+Function access is restricted to specific adddress such as owner or borrower of the contract. For example, the toDefault function is restricted to only borrower or owner of the contract.
 
-## Keeping logic simple
+```solidity
+function toDefault() public isWithdrawn isNotStopped onlyBorrowerOrOwner {
+    _status = Status.Defaulted;
+    emit Defaulted(_id, _borrower, _ownedAmount, _loanAmount);
+}
+```
 
-## Modular and reusable code
+## Circuit Breaker
+A function modifier is added to critical loan function so it can be stopped in the case a bug has been detected.
+
+```solidity
+function withdrawToLenders() public payable isRepaid isNotStopped onlyOwner {}
+```
+
+## State Machine
+The loan contract lifecycle has certain states in which is behaves differently and different funcitons can and should be called.
+
+```solidity
+enum Status { Requesting, Funding, Funded, FundWithdrawn, Repaid, Defaulted, Refunded, Cancelled, Closed }
+.
+.
+modifier isFunding { 
+  require(_status == Status.Funding, "Required Status: Funding"); 
+  _; 
+}
+.
+.
+function depositFund() public payable isFunding isNotStopped {...}
+```
+
+## Speed Bump
+The time secure loan contract demonstrated speed bump in couple functions to slow down actions so if anything goes wrong, there is time to recover.
+
+```solidity
+contract TimeSecuredLoan is SimpleLoan {
+    // Modifiers
+    modifier onlyFullyFundedAfterOneDay { 
+        require(onlyAfter(_fullyFundedTime + 1 days), "Authorized only after 1 day of fully funded"); 
+        _; 
+    
+    }
+    .
+    .
+    function withdrawToBorrower() public payable onlyFullyFundedAfterOneDay {
+        super.withdrawToBorrower();
+    }
+    .
+    .
+}
+```
