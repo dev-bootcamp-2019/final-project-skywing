@@ -11,26 +11,43 @@ class NewLoanForm extends Component {
     
     handleSubmit = (e) => {
         e.preventDefault();
-        // let borrower = e.target.borrowerAddr.value;
-        // let loanAmount = e.target.loanAmt.value;
-        // let loanTitle = e.target.loanTitle.value;
-        // let SimpleLoan = new this.state.web3.eth.Contract(SimpleLoanContract.abi);
-        // //console.log(SimpleLoan);
-        // //console.log('coinbase:', this.state.web3.eth.coinbase);
-        // //let newLoan = SimpleLoan.new({data: SimpleLoanContract.bytecode, from: this.state.web3.eth.coinbase});
-        // SimpleLoan.deploy({
-        //     data: SimpleLoanContract.bytecode
-        // }).send({
-        //     from: this.state.web3.eth.coinbase
-        // })
-        // .on('error', function(error) { console.log(error); })
-        // .then((newInstance) => {
-        //     //console.log(newInstance.options.address);
-        //     this.props.onNewLoan({contractAddress: newInstance.options.address, title: loanTitle});
-        // });
+        let borrower = e.target.borrowerAddr.value;
+        let loanAmount = e.target.loanAmt.value;
+        let loanTitle = e.target.loanTitle.value;
+        let owner = this.state.web3.eth.coinbase;
+        let SimpleLoan = new this.state.web3.eth.Contract(SimpleLoanContract.abi);
+        //console.log(SimpleLoan);
+        //console.log('coinbase:', this.state.web3.eth.coinbase);
+        //let newLoan = SimpleLoan.new({data: SimpleLoanContract.bytecode, from: this.state.web3.eth.coinbase});
+        SimpleLoan.deploy({
+            data: SimpleLoanContract.bytecode
+        }).send({
+            from: this.state.web3.eth.coinbase
+        })
+        .on('error', function(error) { console.log(error); })
+        .then((newInstance) => {
+            
+            let newContract = {
+                contractAddress: newInstance.options.address,
+                borrowerAddress: borrower,
+                amount: loanAmount,
+                title: loanTitle
+            }
+            
+            const STORAGE_KEY = 'contracts';
+            if (localStorage.hasOwnProperty(STORAGE_KEY)) {
+                let value = localStorage.getItem(STORAGE_KEY);
+                let contracts = JSON.parse(value);
+                contracts.push(newContract);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(contracts));
+            } else {
+                let contracts = [newContract];
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(contracts));
+            }
+            this.props.onNewLoan(newContract);
+            this.setState({toHome: true});
+        });
         
-        this.props.onNewLoan({contractAddress: 'address', title: 'new title'});
-        this.setState({toHome: true});
     }
 
     render() {

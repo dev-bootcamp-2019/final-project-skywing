@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, NavLink } from 'react-router-dom';
-import logo from './logo.svg';
-import SimpleLoan from "./contracts/SimpleLoan.json";
+import SimpleLoanContract from "./contracts/SimpleLoan.json";
 import getWeb3 from "./utils/getWeb3";
 import Navbar from "./components/navbar";
 import Home from "./components/home";
 import NewLoanForm from "./components/newloanform";
+import LoanDetails from "./components/loandetails";
 
 import './App.css';
 
 class App extends Component {
-  
-  state = { web3: null, accounts: null, contracts: null, formTitle: "[Title Here]"};
+  STORAGE_KEY = 'contracts';
+  state = { web3: null, accounts: null, contracts: [], formTitle: "[Title Here]"};
 
   componentDidMount = async () => {
     try {
@@ -32,22 +32,21 @@ class App extends Component {
       alert('Failed to load web3, accounts, or contract. Check console for details.');
       console.error(error);
     }
-  }
 
-  // runExample = async() => {
-  //   const { accounts, contract } = this.state;
-  //   const response = await contract.methods.owner().call();
-  //   //console.log(response);
-  //   this.setState({ contractOwner: response });
-  // }
+    if (localStorage.hasOwnProperty(this.STORAGE_KEY)) {
+      let value = localStorage.getItem(this.STORAGE_KEY);
+      this.setState({contracts: JSON.parse(value)});
+    } 
+  }
 
   setFormTitle = title => {
     this.setState({formTitle: title});
   }
 
-  onNewLoan = (loan, history) => {
-    console.log(loan.title, '-', loan.contractAddress);
-    //console.log(history);
+  onNewLoan = (loan) => {
+    console.log(loan);
+    let value = localStorage.getItem(this.STORAGE_KEY);
+    this.setState({contracts: JSON.parse(value)});
   }
 
   render() {
@@ -73,11 +72,6 @@ class App extends Component {
                          New Loan Request
                       </NavLink>
                     </li>
-                    <li className="nav-item">
-                      <NavLink className="nav-link sm active" to="/myloans">
-                        My Loans
-                      </NavLink>
-                    </li>
                   </ul>
                 </div>
               </nav>
@@ -92,15 +86,24 @@ class App extends Component {
                    <Home 
                     onTitle={this.setFormTitle}
                     web3={this.state.web3}
+                    contracts={this.state.contracts}
                    />}/>
                 <Route exact={true} path="/newloan" render={() =>
-                  <NewLoanForm 
-                    onTitle={this.setFormTitle} 
-                    web3={this.state.web3} 
-                    owner={this.state.account}
-                    onNewLoan={this.onNewLoan}
+                    <NewLoanForm 
+                      onTitle={this.setFormTitle} 
+                      web3={this.state.web3} 
+                      owner={this.state.account}
+                      onNewLoan={this.onNewLoan}
+                    />
+                  } 
+                />
+                <Route exact={true} path="/loandetails/:id" render={(props) => 
+                  <LoanDetails 
+                    onTitle={this.setFormTitle}
+                    web3={this.state.web3}
+                    {...props}
                   />
-                } />
+                }/>
 
               </main>
             </div>
