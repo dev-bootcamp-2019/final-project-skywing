@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Router, Route, NavLink, HashRouter } from 'react-router-dom';
+import { BrowserRouter as Router, Route, NavLink } from 'react-router-dom';
 import logo from './logo.svg';
 import SimpleLoan from "./contracts/SimpleLoan.json";
 import getWeb3 from "./utils/getWeb3";
@@ -10,6 +10,7 @@ import NewLoanForm from "./components/newloanform";
 import './App.css';
 
 class App extends Component {
+  
   state = { web3: null, accounts: null, contracts: null, formTitle: "[Title Here]"};
 
   componentDidMount = async () => {
@@ -44,8 +45,9 @@ class App extends Component {
     this.setState({formTitle: title});
   }
 
-  onNewLoan = loan => {
-    console.log(loan.options.address);
+  onNewLoan = (loan, history) => {
+    console.log(loan.title, '-', loan.contractAddress);
+    //console.log(history);
   }
 
   render() {
@@ -55,7 +57,7 @@ class App extends Component {
       return (
         <React.Fragment>
           <Navbar userAddress={this.state.accounts[0]}/>
-          <HashRouter>
+          <Router>
           <div className="container-fluid">
             <div className="row">
               <nav className="col-md-2 d-none d-md-block bg-light sidebar flex-fill h-100">
@@ -96,14 +98,14 @@ class App extends Component {
                     onTitle={this.setFormTitle} 
                     web3={this.state.web3} 
                     owner={this.state.account}
-                    onNewLoan={this.onNewLoan}  
+                    onNewLoan={this.onNewLoan}
                   />
                 } />
 
               </main>
             </div>
           </div>
-          </HashRouter>
+          </Router>
         </React.Fragment>
       );
     }
