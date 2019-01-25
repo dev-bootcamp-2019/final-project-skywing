@@ -74,13 +74,14 @@ class App extends Component {
                   </ul>
                 </div>
               </nav>
-
               <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4">
+                <p>&nbsp;</p>
+                <div class="alert alert-warning mr-3" role="alert">
+                  Please use Google Chrome Browser with MetaMask addon and allow LocalStorage in order for the demo to work accordingly.
+                </div>
                 <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                   <h1 className="h4">{this.state.formTitle}</h1>
                 </div>
-
-              
                 <Route exact={true} path="/" render={() =>
                    <Home 
                     onTitle={this.setFormTitle}

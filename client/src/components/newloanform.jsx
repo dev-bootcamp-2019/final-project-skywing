@@ -60,6 +60,10 @@ class NewLoanForm extends Component {
         }
         return (
             <form onSubmit={this.handleCreateRequest}>
+                <div class="alert alert-danger" role="alert">
+                    Due to multiple function call to create and set the contract information, you will see 
+                    2 transaction requests (2 popup for confirmation if you use MetaMask).
+                </div>
                 <div className="form-group">
                     <label>
                         Title: 

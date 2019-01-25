@@ -21,10 +21,10 @@ class LoanDetails extends Component {
     }
     
     componentDidMount = async() => {
-        const { web3 } = this.props;
+        this.setState({web3: this.props.web3});
         this.props.onTitle(this.state.formTitle + this.props.match.params.id);
         try {
-            const c = new web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
+            const c = new this.props.web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
             this.setState({loan: {
                 borrower: await c.methods.borrower().call(),
                 loanAmount: await c.methods.loanAmount().call(),
@@ -36,19 +36,82 @@ class LoanDetails extends Component {
         }
     }
 
+    handleFundIt = async(e) => {
+        e.preventDefault();
+        const { web3 } = this.state;
+        let loanAmount = e.target.fundAmount.value;
+        let lenderAddr = await this.state.web3.eth.coinbase;
+        console.log(lenderAddr, ' - ', loanAmount);
+        
+        try {
+            const loan = new this.props.web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
+            await loan.methods.depositFund().call({from: lenderAddr, value: loanAmount});
+            let tx = await loan.methods.depositFund().send({from: lenderAddr, value: loanAmount});
+            console.log(tx);
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
+    // renderLenders = async(e) => {
+    //     try {
+    //         const loan = new this.props.web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
+    //         if (this.state.loan.lenderCount > 0) {
+    //             for(i=0;)
+    //             let tx = await loan.methods.depositFund().send({from: lenderAddr, value: loanAmount});    
+    //         }
+    //     } catch(err) {
+    //         console.log(err);
+    //     }
+    // }
+
+    handleBorrowerWithdraw = async() => {
+        const { web3 } = this.state;
+        let borrowerAddr = await this.state.web3.eth.coinbase;
+        try {
+            const loan = new web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
+            await loan.methods.withdrawToBorrower().call({from: borrowerAddr});
+            let tx = await loan.methods.withdrawToBorrower().send({from: borrowerAddr});
+            console.log(tx);
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
     render() {
         return (
-            <div class="row">
-                <div class="col">
+            <div>
+            <div className="row">
+                <div className="col">
                 <h6 htmlFor="borrowerAddr">Borrower: {this.state.loan.borrower}</h6>
                 <h5>Loan Amount: {this.state.loan.loanAmount} ETH</h5>
                 <h6>Status: {this.state.loan.status}</h6>
-                <form>
-                    <div className="form-group row">
-                        
-                    </div>
-                </form>
                 </div>
+            </div>
+            <div className="row">
+                <div className="col">
+                <hr/>
+                <h4>Lender Information</h4>
+                Lender count: {this.state.loan.lenderCount}
+                { this.state.loan.status === 'Funding' ? (
+                    <form className="form-inline" onSubmit={this.handleFundIt}>
+                        <div className="form-group mb-2">
+                            <input type="text" readonly className="form-control-plaintext" id="staticEmail2" value="Funding Amount"/>
+                        </div>
+                        <div className="form-group mx-sm-3 mb-2">
+                            <input type="text" className="form-control" id="fundAmount" placeholder="Amount In Ether"/>
+                        </div>
+                        <button type="submit" className="btn btn-primary mb-2">Fund It !!!</button>
+                    </form>
+                  ) : (<div></div>)
+                }
+                { this.state.loan.status === 'Funded' ? (
+                    <div>
+                        <button onClick={this.handleBorrowerWithdraw} className="btn btn-success mr-5">Widthdraw To Borrower Account</button>
+                    </div>
+                )  : (<div></div>)}
+                </div>
+            </div>
             </div>
         );
     }
