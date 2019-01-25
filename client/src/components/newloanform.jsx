@@ -9,16 +9,15 @@ class NewLoanForm extends Component {
         this.setState({web3: this.props.web3});
     }
     
-    handleSubmit = (e) => {
+
+    handleCreateRequest = async(e) => {
         e.preventDefault();
+
         let borrower = e.target.borrowerAddr.value;
         let loanAmount = e.target.loanAmt.value;
         let loanTitle = e.target.loanTitle.value;
         let owner = this.state.web3.eth.coinbase;
         let SimpleLoan = new this.state.web3.eth.Contract(SimpleLoanContract.abi);
-        //console.log(SimpleLoan);
-        //console.log('coinbase:', this.state.web3.eth.coinbase);
-        //let newLoan = SimpleLoan.new({data: SimpleLoanContract.bytecode, from: this.state.web3.eth.coinbase});
         SimpleLoan.deploy({
             data: SimpleLoanContract.bytecode
         }).send({
@@ -26,7 +25,6 @@ class NewLoanForm extends Component {
         })
         .on('error', function(error) { console.log(error); })
         .then((newInstance) => {
-            
             let newContract = {
                 contractAddress: newInstance.options.address,
                 borrowerAddress: borrower,
@@ -44,10 +42,16 @@ class NewLoanForm extends Component {
                 let contracts = [newContract];
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(contracts));
             }
-            this.props.onNewLoan(newContract);
-            this.setState({toHome: true});
+            
+            // Should have add a constructor to accept borrower and loan amount to avoid 2 transaction.
+            // The original idea is to borrower create a contract to request, broker review and then set up
+            // the request and send it. For this demo, the admin / broker do both together.
+            newInstance.methods.request(borrower, loanAmount).send({from: owner}).then(r => {
+                console.log(r);
+                this.props.onNewLoan(newContract);
+                this.setState({toHome: true});
+            });
         });
-        
     }
 
     render() {
@@ -55,7 +59,7 @@ class NewLoanForm extends Component {
             return <Redirect to='/'/>
         }
         return (
-            <form onSubmit={this.handleSubmit}>
+            <form onSubmit={this.handleCreateRequest}>
                 <div className="form-group">
                     <label>
                         Title: 
@@ -73,7 +77,7 @@ class NewLoanForm extends Component {
                     <label>Loan Amount:</label>
                     <input type="text" className="form-control" id="loanAmt" placeholder="Loan Amount In Ether"/>
                 </div>
-                <button type="submit" className="btn btn-primary">Submit</button>
+                <button type='submit' className="btn btn-primary mr-2">Create Request</button>
             </form>
         );
     }

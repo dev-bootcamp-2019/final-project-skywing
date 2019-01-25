@@ -44,7 +44,6 @@ class App extends Component {
   }
 
   onNewLoan = (loan) => {
-    console.log(loan);
     let value = localStorage.getItem(this.STORAGE_KEY);
     this.setState({contracts: JSON.parse(value)});
   }
@@ -78,7 +77,7 @@ class App extends Component {
 
               <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4">
                 <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                  <h1 className="h2">{this.state.formTitle}</h1>
+                  <h1 className="h4">{this.state.formTitle}</h1>
                 </div>
 
               
