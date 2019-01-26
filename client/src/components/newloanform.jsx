@@ -14,7 +14,8 @@ class NewLoanForm extends Component {
         e.preventDefault();
 
         let borrower = e.target.borrowerAddr.value;
-        let loanAmount = e.target.loanAmt.value;
+        let loanAmount = this.state.web3.utils.toWei(e.target.loanAmt.value, 'ether');
+        console.log('loanAmount:', loanAmount);
         let loanTitle = e.target.loanTitle.value;
         let owner = this.state.web3.eth.coinbase;
         let SimpleLoan = new this.state.web3.eth.Contract(SimpleLoanContract.abi);
@@ -23,7 +24,10 @@ class NewLoanForm extends Component {
         }).send({
             from: this.state.web3.eth.coinbase
         })
-        .on('error', function(error) { console.log(error); })
+        .on('error', (error) => { 
+            console.log(error);
+            this.setState({hasError: true, errorMessage: error.message});
+        })
         .then((newInstance) => {
             let newContract = {
                 contractAddress: newInstance.options.address,
@@ -60,10 +64,16 @@ class NewLoanForm extends Component {
         }
         return (
             <form onSubmit={this.handleCreateRequest}>
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-warning" role="alert">
                     Due to multiple function call to create and set the contract information, you will see 
                     2 transaction requests (2 popup for confirmation if you use MetaMask).
                 </div>
+                { this.state.hasError ? (
+                    <div class="alert alert-danger" role="alert">
+                        {this.state.errorMessage}
+                    </div>
+                  ) : (<div></div>)
+                }
                 <div className="form-group">
                     <label>
                         Title: 

@@ -44,7 +44,7 @@ class Home extends Component {
                             </h5>
                             <div className={this.getCardClassBodyStyle(loan.status)}>
                                 <h6 className="card-title">Borrower: {loan.borrowerAddress}</h6>
-                                <h4 className="card-text">Loan: {loan.amount} ETH </h4>
+                                <h4 className="card-text">Loan: {this.state.web3 ? this.state.web3.utils.fromWei(loan.amount, 'ether') : ''} ETH </h4>
                                 <button className="btn btn-info" onClick={() => this.handleViewDetails(loan.contractAddress)}>View Details</button>
                             </div>
                             <div className="card-footer text-muted">
