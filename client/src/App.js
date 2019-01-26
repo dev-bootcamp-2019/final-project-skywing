@@ -78,6 +78,8 @@ class App extends Component {
                 <p>&nbsp;</p>
                 <div className="alert alert-warning mr-3" role="alert">
                   Please use Google Chrome Browser with MetaMask addon and allow LocalStorage in order for the demo to work accordingly.
+                  Please remember to import your test accounts int MetaMask. If you see the RPC error when you send a transaction, it is most 
+                  likely you are calling a function that you either need to be a owner or borrower of the contract.
                 </div>
                 <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                   <h1 className="h4">{this.state.formTitle}</h1>

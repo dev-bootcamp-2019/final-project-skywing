@@ -84,8 +84,9 @@ class LoanDetails extends Component {
         let borrowerAddr = await this.state.web3.eth.coinbase;
         try {
             const loan = new this.props.web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
-            await loan.methods.repay().call({from: borrowerAddr});
-            let tx = await loan.methods.repay().send({from: borrowerAddr});
+            const ownedAmount = await loan.methods.ownedAmount().call();
+            await loan.methods.repay().call({from: borrowerAddr, value: ownedAmount});
+            let tx = await loan.methods.repay().send({from: borrowerAddr, value: ownedAmount});
             console.log(tx);
             let l = {...this.state.loan};
             l.status = this.getStatusDescription(await loan.methods.status().call());
@@ -114,18 +115,6 @@ class LoanDetails extends Component {
         }
     }
 
-    // renderLenders = async(e) => {
-    //     try {
-    //         const loan = new this.props.web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
-    //         if (this.state.loan.lenderCount > 0) {
-    //             for(i=0;)
-    //             let tx = await loan.methods.depositFund().send({from: lenderAddr, value: loanAmount});    
-    //         }
-    //     } catch(err) {
-    //         console.log(err);
-    //     }
-    // }
-
     handleBorrowerWithdraw = async() => {
         const { web3 } = this.state;
         let borrowerAddr = await this.state.web3.eth.coinbase;
@@ -133,6 +122,23 @@ class LoanDetails extends Component {
             const loan = new web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
             await loan.methods.withdrawToBorrower().call({from: borrowerAddr});
             let tx = await loan.methods.withdrawToBorrower().send({from: borrowerAddr});
+            console.log(tx);
+            let l = {...this.state.loan};
+            l.status = this.getStatusDescription(await loan.methods.status().call());
+            this.setState({loan: l, hasError: false});
+        } catch(err) {
+            console.log(err);
+            this.setState({hasError: true, errorMessage: err.message});
+        }
+    }
+
+    handleWithdrawToLenders = async() => {
+        const { web3 } = this.state;
+        let borrowerAddr = await this.state.web3.eth.coinbase;
+        try {
+            const loan = new web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
+            await loan.methods.withdrawToLenders().call({from: borrowerAddr});
+            let tx = await loan.methods.withdrawToLenders().send({from: borrowerAddr});
             console.log(tx);
             let l = {...this.state.loan};
             l.status = this.getStatusDescription(await loan.methods.status().call());
@@ -162,6 +168,18 @@ class LoanDetails extends Component {
         } 
         return (<h5><span className={style}>Status: {this.state.loan.status}</span></h5>);
     }
+
+    // renderLenders = async(e) => {
+    //     try {
+    //         const loan = new this.props.web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
+    //         if (this.state.loan.lenderCount > 0) {
+    //             for(i=0;)
+    //             let tx = await loan.methods.depositFund().send({from: lenderAddr, value: loanAmount});    
+    //         }
+    //     } catch(err) {
+    //         console.log(err);
+    //     }
+    // }
 
     render() {
         return (
@@ -213,6 +231,10 @@ class LoanDetails extends Component {
                         <button onClick={this.handleRepay} className="btn btn-success mr-2">Repay Account</button>
                         <button onClick={this.handleDefault} className="btn btn-danger mr-2">Default Account</button>
                         </React.Fragment>
+                    )  : (<div></div>)
+                }
+                 { this.state.loan.status === 'Repaid' ? (    
+                        <button onClick={this.handleWithdrawToLenders} className="btn btn-success mr-2">Repay Lender In Full</button>
                     )  : (<div></div>)
                 }
                 </div>
