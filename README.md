@@ -103,3 +103,33 @@ Sample output from the test cases
 ## Front-end Web Application
 The front-end web application is in the **client** folder. The web application is developed with ReactJS with Web3. Please see the READM.md in the client folder for how to run the application.
 
+## ROPSTEN Network Deployment
+Instead of using a local GETH deploy to ROPSTEN, the truffle is configured to use INFURA.
+
+```
+ropsten: {
+      provider: () => new HDWalletProvider(process.env.MNEMONIC, `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`),
+      network_id: 3,       // Ropsten's id
+      gas: 5500000,        // Ropsten has a lower block limit than mainnet
+      confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
+    },
+```
+
+Required NPM packages
+```
+npm install --save truffle-hdwallet-provider
+npm install --save dotenv
+```
+Please update the truffle-config.js to include the require libraries
+```
+const HDWalletProvider = require('truffle-hdwallet-provider');
+require('dotenv').config();
+```
+The configuration values for process.env.XXX are stored in .env file that is not checked-in to GIT to protect the mnemonic and project key (given by INFURA).
+Sameple .env file shown below
+```
+MNEMONIC=[the mnemoic generated from your metamask or wallet account]
+INFURA_API_KEY=[INFURA PROJECT KEY]
+```

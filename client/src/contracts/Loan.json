@@ -593,9 +593,9 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "pragma solidity ^0.5.0;\n\nimport \"./Ownable.sol\";\nimport \"./LoanUtil.sol\";\n\n/**\n * @title Loan based contract\n * @notice This is an abstract contract should be derived be purpose loan contract.\n * It provides the basic storage for borrower, lender, and loan information.\n */\ncontract Loan is Ownable {\n    \n    // Custom type decalration\n    enum Status { Requesting, Funding, Funded, FundWithdrawn, Repaid, Defaulted, Refunded, Cancelled, Closed }\n\n    struct Lender {\n        address payable account;\n        uint lendingAmount;\n        uint repaidAmount;\n        uint refundedAmount;\n    }\n\n    // state variables\n    bytes32 _id;\n    address _borrower;\n    uint _loanAmount;\n    uint _ownedAmount;\n    uint _lenderCount;\n    uint _creationTime = now;\n    uint _fullyFundedTime;\n    uint _repaidTime;\n    Status internal _status;\n\n    // use for circuit breaker\n    bool internal _stopped;\n\n    mapping(address => Lender) internal _lenders;\n    mapping(uint => address) internal _lenderAddr;\n\n    /// events for loan lifecycle\n    event Requesting(bytes32 indexed loanId, address indexed borrower, address owner);\n    event Funding(bytes32 indexed loanId, address indexed lender, uint amount);\n    event Funded(bytes32 indexed loanId, uint amount);\n    event FundWithdrawn(bytes32 indexed loanId, uint amount);\n    event Repaid(bytes32 indexed loanId, uint amount);\n    event Defaulted(bytes32 indexed loanId, address indexed borrower, uint defaultedAmt, uint loanAmt);\n    event Refunded(bytes32 indexed loanId, address indexed lender, uint amount);\n    event Cancelled(bytes32 indexed loanId);\n    event Stopped(bytes32 indexed loanId);\n    event Resumed(bytes32 indexed loanId);\n    event Closed(bytes32 indexed loanId);\n\n    /// internal constructor to make abstract contract.\n    constructor() internal { }\n\n    /// modifiers to check loan in the required status.\n    modifier isFunding { \n        require(_status == Status.Funding, \"Required Status: Funding\"); \n        _; \n    }\n    \n    modifier isFunded { \n        require(_status == Status.Funded, \"Required Status: Funded\"); \n        _; \n    }\n    \n    modifier isWithdrawn { \n        require(_status == Status.FundWithdrawn, \"Required Status: Withdraw\"); \n        _; \n    }\n    \n    modifier isRepaid { \n        require(_status == Status.Repaid, \"Required Status: Repaid\"); \n        _; \n    }\n\n    modifier isDefaulted { \n        require(_status == Status.Defaulted, \"Required Status: Defaulted\"); \n        _; \n    }\n    \n    modifier isRefunded { \n        require(_status == Status.Refunded, \"Required Status: Refunded\"); \n        _; \n    }\n    \n    modifier isCancelled { \n        require(_status == Status.Cancelled, \"Required Status: Cancelled\"); \n        _; \n    }\n    \n    modifier isNotStopped { \n        require(_stopped != true, \"The state of the contract is stopped by the owner, no operations allow at this time.\"); \n        _; \n    }\n    \n    /// Public abtract core loan functions.\n\n    /**\n     * @notice Setup the loan amount and borrower\n     * @param borrower borrower's address\n     * @param amount requested loan amount\n     */\n    function request(address borrower, uint amount) public;\n\n    /**\n     * @notice Lender deposit fund for the loan.\n     */\n    function depositFund() public payable;\n\n    /**\n     * @notice refund the deposited fund to the lender\n     */\n    function refund() public payable;\n    \n    /**\n     * @notice Withdrawing the fund deposited by the lender to borrower account.\n     */\n    function withdrawToBorrower() public payable;\n\n    /**\n     * @notice borrower repay the loan amount to the contract address\n     */\n    function repay() public payable;\n\n    /**\n     * @notice Widthdraw fund from contract balance back to lender according to the loan amount\n     */\n    function withdrawToLenders() public payable;\n    \n    /**\n     * @notice default the loan\n     */\n    function toDefault() public;\n    \n    /**\n     * @notice to cancel the loan\n     */\n    function cancel() public;\n\n    /**\n     * @notice Put the contract in suspend state in the even or ermegency\n     * @dev only owner can execute this function.\n     */\n    function stop() public onlyOwner {\n        _stopped = true;\n        emit Stopped(_id);\n    }\n\n    /**\n     * @notice Take the contract out of suspend state.\n     * @dev only only can execute this function\n     */\n    function resume() public onlyOwner {\n        _stopped = false;\n        emit Resumed(_id);\n    }\n\n    // Public property getters\n\n    /**\n     * @dev getter function for loan id\n     * @return loan ID in string\n     */\n    function id() public view returns(bytes32) {\n        return _id;\n    }\n\n    /**\n     * @dev helper function to get lender by its address\n     * @param addr lender address\n     * @return lender's address, lending amount, and repaid amount in tuples.\n     */\n    function lenderBy(address addr) \n        public \n        view \n        returns(\n            address p_lender, \n            uint p_lendingAmount, \n            uint p_repaidAmount, \n            uint p_refundedAmount) \n    {\n        if (addr == address(0)) {\n            return (address(0), 0, 0, 0);\n        } else {\n            Lender memory l = _lenders[addr];\n            return (l.account, l.lendingAmount, l.repaidAmount, l.refundedAmount);\n        }\n    }\n\n    /**\n     * @dev helper function to get lender address by index\n     * @param idx position index\n     * @return lender address\n     */\n    function lenderAddressAt(uint idx) public view returns(address) {\n        return _lenderAddr[idx];\n    }\n\n    /**\n     * @dev helper function to get lender from the mapping\n     * @param idx the index position in lender address mapping\n     * @return a lender info in tuples\n     */\n    function lenderAt(uint idx) \n        public \n        view \n        returns( \n            address p_lender, \n            uint p_lendingAmount, \n            uint p_repaidAmount, \n            uint p_refundedAmount) \n    {\n        return lenderBy(lenderAddressAt(idx));\n    }\n\n    /**\n     * @dev getter for contract's balance\n     * @return current balance of the contract\n     */\n    function balance() public view returns(uint) {\n        return address(this).balance;\n    }\n\n    /**\n     * @dev getter for status\n     * @return current status according to the loan lifecycle\n     */\n    function status() public view returns(Status) {\n        return _status;\n    }\n\n    /**\n     * @dev getter for loan amount\n     * @return the loan amount requested by the borrower\n     */\n    function loanAmount() public view returns(uint) {\n        return _loanAmount;\n    }\n\n    /**\n     * @dev getter for owned amount\n     * @return the amount withdraw by the borrower\n     */\n    function ownedAmount() public view returns(uint) {\n        return _ownedAmount;\n    }\n\n    /**\n     * @dev getter for borrower\n     * @return borrower address.\n     */\n    function borrower() public view returns(address) {\n        return _borrower;\n    }\n\n    /**\n     * @dev getter for lender counter\n     * @return number of lenders for this contract\n     */\n    function lenderCount() public view returns(uint) {\n        return _lenderCount;\n    }\n\n    /**\n     * @dev a web helper function get loan properties in one function \n     * instead of calling multiple getter function where the code is now readable.\n     * @return tuple with loan property values.\n     */\n    function info() \n        public \n        view \n        returns(\n            bytes32 p_id, \n            Status p_status, \n            uint p_balance, \n            uint p_loanAmount, \n            uint p_ownedAmount, \n            address p_borrower, \n            address p_owner, \n            uint p_lenderCount)\n    {\n        p_id = id();\n        p_status = status();\n        p_balance = balance();\n        p_loanAmount = loanAmount();\n        p_ownedAmount = ownedAmount();\n        p_borrower = borrower();\n        p_owner = owner();\n        p_lenderCount = lenderCount();\n    }\n}",
-  "sourcePath": "/Users/furydev/consensysdev/simple-loan/contracts/Loan.sol",
+  "sourcePath": "/Users/furydev/ethereumdev/simple-loan/contracts/Loan.sol",
   "ast": {
-    "absolutePath": "/Users/furydev/consensysdev/simple-loan/contracts/Loan.sol",
+    "absolutePath": "/Users/furydev/ethereumdev/simple-loan/contracts/Loan.sol",
     "exportedSymbols": {
       "Loan": [
         474
@@ -616,7 +616,7 @@
         "src": "0:23:0"
       },
       {
-        "absolutePath": "/Users/furydev/consensysdev/simple-loan/contracts/Ownable.sol",
+        "absolutePath": "/Users/furydev/ethereumdev/simple-loan/contracts/Ownable.sol",
         "file": "./Ownable.sol",
         "id": 2,
         "nodeType": "ImportDirective",
@@ -627,7 +627,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/furydev/consensysdev/simple-loan/contracts/LoanUtil.sol",
+        "absolutePath": "/Users/furydev/ethereumdev/simple-loan/contracts/LoanUtil.sol",
         "file": "./LoanUtil.sol",
         "id": 3,
         "nodeType": "ImportDirective",
@@ -6224,7 +6224,7 @@
     "src": "0:7956:0"
   },
   "legacyAST": {
-    "absolutePath": "/Users/furydev/consensysdev/simple-loan/contracts/Loan.sol",
+    "absolutePath": "/Users/furydev/ethereumdev/simple-loan/contracts/Loan.sol",
     "exportedSymbols": {
       "Loan": [
         474
@@ -6245,7 +6245,7 @@
         "src": "0:23:0"
       },
       {
-        "absolutePath": "/Users/furydev/consensysdev/simple-loan/contracts/Ownable.sol",
+        "absolutePath": "/Users/furydev/ethereumdev/simple-loan/contracts/Ownable.sol",
         "file": "./Ownable.sol",
         "id": 2,
         "nodeType": "ImportDirective",
@@ -6256,7 +6256,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/furydev/consensysdev/simple-loan/contracts/LoanUtil.sol",
+        "absolutePath": "/Users/furydev/ethereumdev/simple-loan/contracts/LoanUtil.sol",
         "file": "./LoanUtil.sol",
         "id": 3,
         "nodeType": "ImportDirective",
@@ -11858,7 +11858,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-01-27T03:17:12.418Z",
+  "updatedAt": "2019-01-27T16:34:23.574Z",
   "devdoc": {
     "methods": {
       "balance()": {
