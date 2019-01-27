@@ -10,13 +10,8 @@ npm install popper.js
 npm install resolve-url-loader
 ```
 
-<<<<<<< HEAD
 ### LocalStoage
 Instead off using database to store some contract state, the web app use local storage. LocalStorage used by the web app is allowed by default, if you have some special setting preventing it, please temporary allow during evaluation.
-=======
-![](public/img/md_localstorage.png?raw=true)
->>>>>>> 68b48898a507adbc9a242bc0472d507bf598459e
-
 ![](public/img/md_localstorage.png?raw=true)
 
 ### Ganache
