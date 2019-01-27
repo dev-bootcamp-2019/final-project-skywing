@@ -171,7 +171,15 @@ contract Loan is Ownable {
      * @param addr lender address
      * @return lender's address, lending amount, and repaid amount in tuples.
      */
-    function lenderBy(address addr) public view returns(address, uint, uint, uint) {
+    function lenderBy(address addr) 
+        public 
+        view 
+        returns(
+            address p_lender, 
+            uint p_lendingAmount, 
+            uint p_repaidAmount, 
+            uint p_refundedAmount) 
+    {
         if (addr == address(0)) {
             return (address(0), 0, 0, 0);
         } else {
@@ -194,7 +202,15 @@ contract Loan is Ownable {
      * @param idx the index position in lender address mapping
      * @return a lender info in tuples
      */
-    function lenderAt(uint idx) public view returns(address, uint, uint, uint) {
+    function lenderAt(uint idx) 
+        public 
+        view 
+        returns( 
+            address p_lender, 
+            uint p_lendingAmount, 
+            uint p_repaidAmount, 
+            uint p_refundedAmount) 
+    {
         return lenderBy(lenderAddressAt(idx));
     }
 
