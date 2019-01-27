@@ -111,7 +111,6 @@ contract('TimeSecuredLoan-Fund-Refund', function(accounts) {
 
         await loan.refund({from:owner});
         assert.equal((await loan.ownedAmount()).toString(), "0", "Expecting owned amount to be 0.");
-        assert.equal((await loan.lenderCount()).toString(), "0", "Expecting lender count to be 0.");
         assert.equal((await loan.balance()).toString(), "0", "Expecting balance to be 0.");
 
         current_lender1_balance = web3.utils.toBN(await web3.eth.getBalance(lender1));

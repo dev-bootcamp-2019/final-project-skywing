@@ -1,11 +1,16 @@
 import React, { Component } from "react";
 import { Redirect } from 'react-router-dom';
 
-class Home extends Component {
-    state = {formTitle: "All the Loans", web3: null, toLoanDetails: false, contractAddress: null }
+class AllLoans extends Component {
+    state = {formTitle: "All Loans", web3: null, toLoanDetails: false, contractAddress: null }
     
     componentDidMount() {
-        this.props.onTitle(this.state.formTitle)
+        
+        if (this.props.contracts.lenght === undefined || this.props.contracts.lenght > 0) {
+            this.props.onTitle('Get a Personal Loan')    
+        } else {
+            this.props.onTitle(this.state.formTitle)
+        }
         this.setState({web3: this.props.web3});
     }
 
@@ -30,11 +35,13 @@ class Home extends Component {
     }
 
     showContracts() {
+        console.log(this.props.contracts);
         if (this.state.toLoanDetails === true) {
             return <Redirect to={'/loandetails/' + this.state.contractAddress} />
         }
         return (
-        <div className="row">
+        <React.Fragment>
+            <div className="row">
             {
                 this.props.contracts.map(loan => (
                     <div className="col-sm-6"  key={loan.contractAddress}>
@@ -54,7 +61,20 @@ class Home extends Component {
                     </div>
                 ))
             }
-        </div>
+            </div>
+            {
+                this.props.contracts.length === 0 ? (
+                    <div>
+                        <img src="/img/btn-apply-loan.png" height="256" width="256" className="rounded mx-auto d-block" alt="Applhy Loan"/>
+                        <div>&nbsp;</div>
+                        <p className="text-center display-4">
+                            Get It Now !!!
+                        </p>
+                    </div>  
+                ) : (<div></div>)
+            }
+        </React.Fragment>
+        
         );
     }
 
@@ -63,4 +83,4 @@ class Home extends Component {
     }
 }
 
-export default Home;
+export default AllLoans;

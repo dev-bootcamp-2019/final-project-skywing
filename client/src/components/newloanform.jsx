@@ -12,10 +12,16 @@ class NewLoanForm extends Component {
 
     handleCreateRequest = async(e) => {
         e.preventDefault();
-
+        
         let borrower = e.target.borrowerAddr.value;
-        let loanAmount = this.state.web3.utils.toWei(e.target.loanAmt.value, 'ether');
-        console.log('loanAmount:', loanAmount);
+        let loanAmount = e.target.loanAmt.value != '' ? this.state.web3.utils.toWei(e.target.loanAmt.value, 'ether') : "0";
+
+        const { web3 } = this.state;
+        if (!web3.utils.isAddress(borrower)) {
+            this.setState({hasError: true, errorMessage: 'Borrower address is not a valid address in the network'});
+            return;
+        }
+
         let loanTitle = e.target.loanTitle.value;
         let owner = this.state.web3.eth.coinbase;
         let SimpleLoan = new this.state.web3.eth.Contract(SimpleLoanContract.abi);
@@ -64,9 +70,17 @@ class NewLoanForm extends Component {
         }
         return (
             <form onSubmit={this.handleCreateRequest}>
-                <div class="alert alert-warning" role="alert">
-                    Due to multiple function call to create and set the contract information, you will see 
-                    2 transaction requests (2 popup for confirmation if you use MetaMask).
+                <div className="alert alert-warning alert-dismissible" role="alert">
+                    <strong>
+                        In actual case, the create contract will occur first, then the contract will go thru a review 
+                        and approval process, then the broker (admin/owner) will set the request. There will be 2 transaction call
+                        in this case. For demo purpose, I program the 2 transaction call in one page so you will see 2 MetaMask requests.
+                        Due to multiple function call to create and set the contract information, you will see 2 transaction requests 
+                        (2 popup for confirmation if you use MetaMask).
+                    </strong>
+                  <button type="button" className="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
                 </div>
                 { this.state.hasError ? (
                     <div class="alert alert-danger" role="alert">

@@ -1,9 +1,7 @@
 pragma solidity ^0.5.0;
 
-
 import "./Loan.sol";
 import {LoanUtil} from "./LoanUtil.sol";
-import {StringUtils} from "./StringLib.sol";
 
 /**
  * @title Simple loan contract
@@ -71,7 +69,7 @@ contract SimpleLoan is Loan {
         require(msg.sender != owner(), "Owner can't be a lender in the same contract.");
         require(msg.sender != _borrower, "Borrower can't be a lender in the same contract.");
 
-        _lenders[msg.sender] = Lender({account: msg.sender, lendingAmount: msg.value, repaidAmount: 0});
+        _lenders[msg.sender] = Lender({account: msg.sender, lendingAmount: msg.value, repaidAmount: 0, refundedAmount: 0});
         _lenderAddr[_lenderCount] = msg.sender;
         _lenderCount++;
         _ownedAmount += msg.value;
@@ -98,14 +96,16 @@ contract SimpleLoan is Loan {
             if (lender.account != address(0))
             {
                 uint refundAmt = lender.lendingAmount;
+                lender.refundedAmount = refundAmt;
+                _lenders[_lenderAddr[i]] = lender;
+
                 address refundAddr = lender.account;
-                delete _lenders[_lenderAddr[i]];
                 _ownedAmount -= refundAmt;
+
                 lender.account.transfer(refundAmt);
                 emit Refunded(_id, refundAddr, refundAmt);
             }
         }
-        _lenderCount = 0;
         _status = Status.Refunded;
     }
     
@@ -160,7 +160,7 @@ contract SimpleLoan is Loan {
      * @notice to cancel the loan
      */
     function cancel() public isNotStopped onlyBorrowerOrOwner {
-        require(_lenderCount == 0, "Can't cancelled contract when fund is provided. Fund need to be return first before cancel.");
+        require(_ownedAmount == 0, "Can't cancelled contract when fund is provided. Use refund function.");
         _status = Status.Cancelled;
         emit Cancelled(_id);
     }

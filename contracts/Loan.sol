@@ -17,6 +17,7 @@ contract Loan is Ownable {
         address payable account;
         uint lendingAmount;
         uint repaidAmount;
+        uint refundedAmount;
     }
 
     // state variables
@@ -170,12 +171,12 @@ contract Loan is Ownable {
      * @param addr lender address
      * @return lender's address, lending amount, and repaid amount in tuples.
      */
-    function lenderBy(address addr) public view returns(address, uint, uint) {
+    function lenderBy(address addr) public view returns(address, uint, uint, uint) {
         if (addr == address(0)) {
-            return (address(0), 0, 0);
+            return (address(0), 0, 0, 0);
         } else {
             Lender memory l = _lenders[addr];
-            return (l.account, l.lendingAmount, l.repaidAmount);
+            return (l.account, l.lendingAmount, l.repaidAmount, l.refundedAmount);
         }
     }
 
@@ -193,7 +194,7 @@ contract Loan is Ownable {
      * @param idx the index position in lender address mapping
      * @return a lender info in tuples
      */
-    function lenderAt(uint idx) public view returns(address, uint, uint) {
+    function lenderAt(uint idx) public view returns(address, uint, uint, uint) {
         return lenderBy(lenderAddressAt(idx));
     }
 
@@ -201,7 +202,7 @@ contract Loan is Ownable {
      * @dev getter for contract's balance
      * @return current balance of the contract
      */
-    function balance() public view returns(uint256) {
+    function balance() public view returns(uint) {
         return address(this).balance;
     }
 
@@ -243,5 +244,33 @@ contract Loan is Ownable {
      */
     function lenderCount() public view returns(uint) {
         return _lenderCount;
+    }
+
+    /**
+     * @dev a web helper function get loan properties in one function 
+     * instead of calling multiple getter function where the code is now readable.
+     * @return tuple with loan property values.
+     */
+    function info() 
+        public 
+        view 
+        returns(
+            bytes32 p_id, 
+            Status p_status, 
+            uint p_balance, 
+            uint p_loanAmount, 
+            uint p_ownedAmount, 
+            address p_borrower, 
+            address p_owner, 
+            uint p_lenderCount)
+    {
+        p_id = id();
+        p_status = status();
+        p_balance = balance();
+        p_loanAmount = loanAmount();
+        p_ownedAmount = ownedAmount();
+        p_borrower = borrower();
+        p_owner = owner();
+        p_lenderCount = lenderCount();
     }
 }

@@ -2,7 +2,7 @@ import React from "react";
 
 const Navbar = ({ userAddress }) => {
   return (
-    <nav className="navbar navbar-dark bg-dark flex-md-nowrap shadow">
+    <nav className="navbar navbar-dark bg-dark flex-md-nowrap">
       <span className="navbar-brand mb-0 h1">Simple Loan Demo</span>
       <form className="mx-2 my-auto w-50 d-inline">
             <div className="input-group input-group-sm">

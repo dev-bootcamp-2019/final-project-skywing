@@ -103,7 +103,6 @@ contract('SimpleLoan-Fund-Refund', function(accounts) {
 
         await loan.refund({from:owner});
         assert.equal((await loan.ownedAmount()).toString(), "0", "Expecting owned amount to be 0.");
-        assert.equal((await loan.lenderCount()).toString(), "0", "Expecting lender count to be 0.");
         assert.equal((await loan.balance()).toString(), "0", "Expecting balance to be 0.");
 
         current_lender1_balance = web3.utils.toBN(await web3.eth.getBalance(lender1));
@@ -303,7 +302,7 @@ contract('SimpleLoan-Default-Cancel', function(accounts) {
 
     it('should not be cancelled when borrower withdrawn the money', async() => {
         await loan.withdrawToBorrower({from:borrower});
-        await truffleAssert.fails(loan.cancel({from:borrower}), truffleAssert.ErrorType.REVERT, "Can't cancelled contract when fund is provided. Fund need to be return first before cancel");
+        await truffleAssert.fails(loan.cancel({from:borrower}), truffleAssert.ErrorType.REVERT, "Can't cancelled contract when fund is provided. Use refund function");
     });
 
 });

@@ -1,15 +1,18 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, NavLink } from 'react-router-dom';
-import SimpleLoanContract from "./contracts/SimpleLoan.json";
+//import SimpleLoanContract from "./contracts/SimpleLoan.json";
 import getWeb3 from "./utils/getWeb3";
 import Navbar from "./components/navbar";
-import Home from "./components/home";
+import AllLoans from "./components/allloans";
 import NewLoanForm from "./components/newloanform";
 import LoanDetails from "./components/loandetails";
-
+import $ from "jquery";
+import 'bootstrap';
+import "bootstrap/dist/css/bootstrap.css";
 import './App.css';
 
 class App extends Component {
+  
   STORAGE_KEY = 'contracts';
   state = { web3: null, accounts: null, contracts: [], formTitle: "[Title Here]"};
 
@@ -58,12 +61,13 @@ class App extends Component {
           <Router>
           <div className="container-fluid">
             <div className="row">
-              <nav className="col-md-2 d-none d-md-block bg-light sidebar flex-fill h-100">
-                <div className="sidebar-sticky">
+              <nav className="col-md-2 d-none d-md-block bg-light sidebar">
+                <div className="sidebar-sticky  flex-fill h-100">
                   <ul className="nav flex-column">
+                    <li className="nav-item"><div>&nbsp;</div></li>
                     <li className="nav-item">
                       <NavLink className="nav-link sm active" to="/">
-                        Home 
+                        All Loans 
                       </NavLink>
                     </li>
                     <li className="nav-item">
@@ -75,17 +79,20 @@ class App extends Component {
                 </div>
               </nav>
               <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4">
-                <p>&nbsp;</p>
-                <div className="alert alert-warning mr-3" role="alert">
-                  Please use Google Chrome Browser with MetaMask addon and allow LocalStorage in order for the demo to work accordingly.
+                <div>&nbsp;</div>
+                <div className="alert alert-warning alert-dismissible" role="alert">
+                  <strong>Please use Google Chrome Browser with MetaMask addon and allow LocalStorage in order for the demo to work accordingly.
                   Please remember to import your test accounts int MetaMask. If you see the RPC error when you send a transaction, it is most 
-                  likely you are calling a function that you either need to be a owner or borrower of the contract.
+                  likely you are calling a function that you either need to be a owner or borrower of the contract.</strong>
+                  <button type="button" className="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
                 </div>
                 <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                   <h1 className="h4">{this.state.formTitle}</h1>
                 </div>
                 <Route exact={true} path="/" render={() =>
-                   <Home 
+                   <AllLoans 
                     onTitle={this.setFormTitle}
                     web3={this.state.web3}
                     contracts={this.state.contracts}
