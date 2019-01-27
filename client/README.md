@@ -12,8 +12,7 @@ npm install resolve-url-loader
 
 ### LocalStoage
 Instead off using database to store some contract state, the web app use local storage. LocalStorage used by the web app is allowed by default, if you have some special setting preventing it, please temporary allow during evaluation.
-
-![LocalStorage](public/img/md_localstorage.png?raw=true)
+![](public/img/md_localstorage.png?raw=true)
 
 ### Ganache
 Please makesure Ganache is started with the default settings as shown below. Truffle config is configured to connect to Ganache for contract migration.
