@@ -10,7 +10,7 @@ npm install popper.js
 npm install resolve-url-loader
 ```
 
-![](../imag/md_localstorage?raw=true)
+![](../img/md_localstorage?raw=true)
 
 
 ## Available Scripts
