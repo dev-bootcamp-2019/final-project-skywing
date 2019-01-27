@@ -26,13 +26,6 @@ class LoanDetails extends Component {
         try {
             const c = new this.props.web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
             c.methods.info().call().then(info => {
-                // this.setState({loan: {
-                //     owner: info.p_owner,
-                //     borrower: info.p_borrower,
-                //     loanAmount: this.props.web3.utils.fromWei(info.p_loanAmount, 'ether'),
-                //     status: this.getStatusDescription(info.p_status),
-                //     lenderCount: parseInt(info.p_lenderCount)
-                // }});
                 return {
                         owner: info.p_owner,
                         borrower: info.p_borrower,
@@ -42,7 +35,7 @@ class LoanDetails extends Component {
                     };
             }).then(l => {
                 this.setState({loan: l});
-                //this.refreshLenders();
+                this.refreshLenders();
             });
         } catch(error) {
             console.error(error);
@@ -52,16 +45,17 @@ class LoanDetails extends Component {
     async refreshLenders() {
         try {
             const contract = new this.props.web3.eth.Contract(SimpleLoanContract.abi, this.props.match.params.id);
-            let count = await contract.methods.lenderCount().call(); // .then(count => {
-                let ls = [];
-                for(let i = 0; i < count; i++) {
-                    contract.methods.lenderAt(i).call().then(l => {
-                        ls.push(l);
-                        console.log(l);
-                    });
-                }    
-                this.setState({lenders: ls});
-            //})
+            let count = await contract.methods.lenderCount().call();
+            let ls = [];
+            for(let i = 0; i < count; i++) {
+                let l = await contract.methods.lenderAt(i).call();
+                l.p_lendingAmount = this.props.web3.utils.fromWei(l.p_lendingAmount, 'ether');
+                l.p_repaidAmount = this.props.web3.utils.fromWei(l.p_repaidAmount, 'ether');
+                l.p_refundedAmount = this.props.web3.utils.fromWei(l.p_refundedAmount, 'ether');
+                ls.push(l);
+                console.log(l);
+            }    
+            this.setState({lenders: ls});
         } catch(err) {
             console.log(err);
         }
@@ -198,37 +192,6 @@ class LoanDetails extends Component {
         return (<h5><span className={style}>Status: {this.state.loan.status}</span></h5>);
     }
 
-    renderLenders() {
-        console.log('lender count:', this.state.lenders.length);
-        return (
-            <React.Fragment>
-                <table className="table table-bordered">
-                    <thead>
-                        <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Lender Address</th>
-                        <th scope="col">Lending Amount</th>
-                        <th scope="col">Repaid Amount</th>
-                        <th scope="col">Refunded Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                {
-                    this.state.lenders.map((l,index) => (
-                            <tr>
-                            <th scope="row"></th>
-                            <td>{l.p_lender}</td>
-                            <td></td>
-                            <td></td>
-                            </tr>
-                    ))
-                }
-                    </tbody>
-                </table>
-            </React.Fragment>
-        );
-    }
-
     render() {
         return (
             <div>
@@ -251,9 +214,9 @@ class LoanDetails extends Component {
                 <div className="col">
                 <hr/>
                 <h4>Lender Information</h4>
-                Lender count: {this.state.loan.lenderCount}
+                {/* Lender count: {this.state.loan.lenderCount} */}
 
-                { this.renderLenders() }
+                <LenderTable lenders={this.state.lenders}/>
 
                 { this.state.loan.status === 'Funding' ? (
                     <form className="form-inline" onSubmit={this.handleFundIt}>
@@ -292,6 +255,39 @@ class LoanDetails extends Component {
                 </div>
             </div>
             </div>
+        );
+    }
+}
+
+class LenderTable extends Component {
+    render() {
+        return (
+            <React.Fragment>
+                <table className="table table-bordered">
+                    <thead>
+                        <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Lender Address</th>
+                        <th scope="col">Lending Amount</th>
+                        <th scope="col">Repaid Amount</th>
+                        <th scope="col">Refunded Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                {
+                    this.props.lenders.map((l,index) => (
+                            <tr>
+                            <th scope="row">{++index}</th>
+                            <td>{l.p_lender}</td>
+                            <td className="text-center">{l.p_lendingAmount} <small>ETH</small></td>
+                            <td className="text-center">{l.p_repaidAmount} <small>ETH</small></td>
+                            <td className="text-center">{l.p_refundedAmount} <small>ETH</small></td>
+                            </tr>
+                    ))
+                }
+                    </tbody>
+                </table>
+            </React.Fragment>
         );
     }
 }
