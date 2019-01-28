@@ -101,7 +101,7 @@ Sample output from the test cases
 ```
 
 ## Front-end Web Application
-The front-end web application is in the **client** folder. The web application is developed with ReactJS with Web3. Please see the ***[READM.md](client/README.me)*** in the client folder for how to run the application.
+The front-end web application is in the **client** folder. The web application is developed with ReactJS with Web3. Please see the ***[READM.md](/client/README.me)*** in the client folder for how to run the application.
 
 ## ROPSTEN Network Deployment
 Instead of using a local GETH deploy to ROPSTEN, the truffle is configured to use INFURA.
