@@ -60,7 +60,7 @@ Click the 'Create Request' and it will submit 2 transactions. The first transcti
 
 ![New Loan](public/img/md_app_newloan_1.png?raw=true)
 
-***CONTRACT INTERACTION*** is clearly shown in the first popup.
+***CONTRACT INTERACTION*** is clearly shown in the second popup.
 
 ![New Loan](public/img/md_app_newloan_2.png?raw=true)
 
