@@ -34,6 +34,7 @@ To run truffle testing, you need to install [truffle-assertions](https://www.npm
 
 ```
 npm install --save-dev truffle-assertions
+npm install dotenv
 ```
 
 [Ganache](https://truffleframework.com/ganache) is expected to run with the unit test cases
